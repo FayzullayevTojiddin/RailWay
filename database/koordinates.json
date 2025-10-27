@@ -1,0 +1,310 @@
+{
+  "railway_line": "Qarshi-Termez",
+  "stations": [
+    {
+      "id": 1,
+      "name": "Qarshi",
+      "name_uz": "Қарши",
+      "name_ru": "Карши",
+      "lat": 38.85,
+      "lon": 65.78,
+      "km_mark": null,
+      "type": "major",
+      "electrified": false
+    },
+    {
+      "id": 2,
+      "name": "Ariq",
+      "name_uz": "Ариқ",
+      "name_ru": "Арик",
+      "lat": 38.80,
+      "lon": 65.85,
+      "km_mark": "10",
+      "type": "station",
+      "electrified": false
+    },
+    {
+      "id": 3,
+      "name": "Dehqonobod",
+      "name_uz": "Деҳқонобод",
+      "name_ru": "Дехканабад",
+      "lat": 38.72,
+      "lon": 65.98,
+      "km_mark": "27",
+      "type": "station",
+      "electrified": false
+    },
+    {
+      "id": 4,
+      "name": "Chiroqchi",
+      "name_uz": "Чироқчи",
+      "name_ru": "Чиракчи",
+      "lat": 38.65,
+      "lon": 66.08,
+      "km_mark": "37",
+      "type": "station",
+      "electrified": false
+    },
+    {
+      "id": 5,
+      "name": "Muborak",
+      "name_uz": "Муборак",
+      "name_ru": "Мубарек",
+      "lat": 38.58,
+      "lon": 66.18,
+      "km_mark": "57",
+      "type": "station",
+      "electrified": false
+    },
+    {
+      "id": 6,
+      "name": "Tallimarjon",
+      "name_uz": "Таллимаржон",
+      "name_ru": "Таллимарджан",
+      "lat": 38.48,
+      "lon": 66.35,
+      "km_mark": "75",
+      "type": "station",
+      "electrified": false
+    },
+    {
+      "id": 7,
+      "name": "G'uzor",
+      "name_uz": "Ғузор",
+      "name_ru": "Гузар",
+      "lat": 38.63,
+      "lon": 66.26,
+      "km_mark": null,
+      "type": "major",
+      "electrified": true
+    },
+    {
+      "id": 8,
+      "name": "Kitob",
+      "name_uz": "Китоб",
+      "name_ru": "Китаб",
+      "lat": 39.09,
+      "lon": 66.84,
+      "km_mark": null,
+      "type": "major",
+      "electrified": true
+    },
+    {
+      "id": 9,
+      "name": "Qamashi",
+      "name_uz": "Қамаши",
+      "name_ru": "Камаши",
+      "lat": 38.95,
+      "lon": 67.15,
+      "km_mark": "60",
+      "type": "station",
+      "electrified": true
+    },
+    {
+      "id": 10,
+      "name": "Chim",
+      "name_uz": "Чим",
+      "name_ru": "Чим",
+      "lat": 38.78,
+      "lon": 67.35,
+      "km_mark": "75",
+      "type": "station",
+      "electrified": true
+    },
+    {
+      "id": 11,
+      "name": "Sho'rchi",
+      "name_uz": "Шўрчи",
+      "name_ru": "Шурчи",
+      "lat": 38.65,
+      "lon": 67.52,
+      "km_mark": "11",
+      "type": "station",
+      "electrified": true
+    },
+    {
+      "id": 12,
+      "name": "Xorabog'",
+      "name_uz": "Хоработ",
+      "name_ru": "Харабат",
+      "lat": 38.55,
+      "lon": 67.68,
+      "km_mark": "11",
+      "type": "station",
+      "electrified": true
+    },
+    {
+      "id": 13,
+      "name": "Chorvoq",
+      "name_uz": "Чорвоқ",
+      "name_ru": "Чарвак",
+      "lat": 38.45,
+      "lon": 67.82,
+      "km_mark": "11",
+      "type": "station",
+      "electrified": true
+    },
+    {
+      "id": 14,
+      "name": "Elboyon",
+      "name_uz": "Элбойон",
+      "name_ru": "Элбаян",
+      "lat": 38.32,
+      "lon": 67.95,
+      "km_mark": "15",
+      "type": "station",
+      "electrified": true
+    },
+    {
+      "id": 15,
+      "name": "Denov",
+      "name_uz": "Денов",
+      "name_ru": "Денау",
+      "lat": 38.25,
+      "lon": 68.08,
+      "km_mark": "16",
+      "type": "station",
+      "electrified": true
+    },
+    {
+      "id": 16,
+      "name": "Kumkurg'on",
+      "name_uz": "Қумқўрғон",
+      "name_ru": "Кумкурган",
+      "lat": 37.83,
+      "lon": 67.59,
+      "km_mark": "4532",
+      "type": "major",
+      "electrified": true
+    },
+    {
+      "id": 17,
+      "name": "Surchon",
+      "name_uz": "Сурхон",
+      "name_ru": "Сурхан",
+      "lat": 37.68,
+      "lon": 67.48,
+      "km_mark": "4519",
+      "type": "station",
+      "electrified": true
+    },
+    {
+      "id": 18,
+      "name": "Zarippa",
+      "name_uz": "Зарепа",
+      "name_ru": "Зарепа",
+      "lat": 37.55,
+      "lon": 67.42,
+      "km_mark": "4503",
+      "type": "station",
+      "electrified": true
+    },
+    {
+      "id": 19,
+      "name": "Jarkurg'on",
+      "name_uz": "Жаркўрғон",
+      "name_ru": "Джаркурган",
+      "lat": 37.45,
+      "lon": 67.38,
+      "km_mark": "4490",
+      "type": "station",
+      "electrified": true
+    },
+    {
+      "id": 20,
+      "name": "Baqtriya",
+      "name_uz": "Бақтрия",
+      "name_ru": "Бактрия",
+      "lat": 37.35,
+      "lon": 67.32,
+      "km_mark": "4472",
+      "type": "station",
+      "electrified": true
+    },
+    {
+      "id": 21,
+      "name": "G'alaba",
+      "name_uz": "Ғалаба",
+      "name_ru": "Галаба",
+      "lat": 37.28,
+      "lon": 67.28,
+      "km_mark": null,
+      "type": "border",
+      "electrified": true
+    },
+    {
+      "id": 22,
+      "name": "Termez",
+      "name_uz": "Термиз",
+      "name_ru": "Термез",
+      "lat": 37.25,
+      "lon": 67.29,
+      "km_mark": "4460",
+      "type": "major",
+      "electrified": true
+    },
+    {
+      "id": 23,
+      "name": "Amuzang",
+      "name_uz": "Амузанг",
+      "name_ru": "Амузанг",
+      "lat": 37.28,
+      "lon": 67.45,
+      "km_mark": null,
+      "type": "station",
+      "electrified": true
+    },
+    {
+      "id": 24,
+      "name": "Sherobod",
+      "name_uz": "Шеробод",
+      "name_ru": "Шерабад",
+      "lat": 37.42,
+      "lon": 66.99,
+      "km_mark": null,
+      "type": "station",
+      "electrified": false
+    },
+    {
+      "id": 25,
+      "name": "Tsement zavod",
+      "name_uz": "Цемент завод",
+      "name_ru": "Цемент завод",
+      "lat": 37.58,
+      "lon": 66.52,
+      "km_mark": "23",
+      "type": "industrial",
+      "electrified": false
+    },
+    {
+      "id": 26,
+      "name": "Ko'krobod",
+      "name_uz": "Кўкробод",
+      "name_ru": "Кокрабад",
+      "lat": 37.68,
+      "lon": 66.45,
+      "km_mark": null,
+      "type": "station",
+      "electrified": false
+    },
+    {
+      "id": 27,
+      "name": "Sharg'un shahar",
+      "name_uz": "Шарғун шаҳар",
+      "name_ru": "Шаргунь шахар",
+      "lat": 37.72,
+      "lon": 66.38,
+      "km_mark": null,
+      "type": "station",
+      "electrified": false
+    }
+  ],
+  "metadata": {
+    "total_stations": 27,
+    "electrified_count": 17,
+    "main_line": "Qarshi-Termez",
+    "branch_lines": ["Sherobod-Turkmeniston"],
+    "coordinate_system": "WGS84",
+    "note": "Koordinatalar rasmdan taxminiy hisoblab chiqarilgan"
+  }
+}
