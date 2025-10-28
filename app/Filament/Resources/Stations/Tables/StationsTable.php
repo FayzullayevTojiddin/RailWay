@@ -71,8 +71,8 @@ class StationsTable
                         if (!$record->coordinates) {
                             return '-';
                         }
-                        $lat = $record->coordinates['latitude'] ?? '-';
-                        $lng = $record->coordinates['longitude'] ?? '-';
+                        $lat = $record->coordinates['lat'] ?? '-';
+                        $lng = $record->coordinates['lng'] ?? '-';
                         return "Lat: {$lat}, Lng: {$lng}";
                     })
                     ->wrap()

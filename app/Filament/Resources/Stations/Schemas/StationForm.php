@@ -43,14 +43,14 @@ class StationForm
                 ->schema([
                     Grid::make(2)
                         ->schema([
-                            TextInput::make('coordinates.latitude')
+                            TextInput::make('coordinates.lat')
                                 ->label('Kenglik (Latitude)')
                                 ->numeric()
                                 ->step(0.000001)
                                 ->required()
                                 ->placeholder('41.311151'),
 
-                            TextInput::make('coordinates.longitude')
+                            TextInput::make('coordinates.lng')
                                 ->label('Uzunlik (Longitude)')
                                 ->numeric()
                                 ->step(0.000001)
