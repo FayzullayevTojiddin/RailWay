@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Stations;
 
 use App\Filament\Resources\Stations\Pages\CreateStation;
 use App\Filament\Resources\Stations\Pages\EditStation;
+use App\Filament\Resources\Stations\Pages\ViewStation;
 use App\Filament\Resources\Stations\Pages\ListStations;
 use App\Filament\Resources\Stations\Schemas\StationForm;
 use App\Filament\Resources\Stations\Tables\StationsTable;
@@ -78,6 +79,7 @@ class StationResource extends Resource
             'index' => ListStations::route('/'),
             'create' => CreateStation::route('/create'),
             'edit' => EditStation::route('/{record}/edit'),
+            'show' => ViewStation::route('/{record}'),
         ];
     }
     

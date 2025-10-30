@@ -444,7 +444,7 @@
                 },
                 
                 goToStationDetails() {
-                    window.location.href = `/super/stations/${this.selectedStation.id}/edit`;
+                    window.location.href = `/super/stations/${this.selectedStation.id}`;
                 }
             }
         }
