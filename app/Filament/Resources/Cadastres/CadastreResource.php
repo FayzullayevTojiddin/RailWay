@@ -26,7 +26,14 @@ class CadastreResource extends Resource
 
     protected static string|UnitEnum|null $navigationGroup = 'Boshqaruv';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 6;
+    
+    protected static ?string $recordTitleAttribute = 'name';
+    
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::count();
+    }
 
     public static function form(Schema $form): Schema
     {

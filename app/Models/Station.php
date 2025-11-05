@@ -30,13 +30,18 @@ class Station extends Model
         return $this->hasMany(Employee::class);
     }
 
-    public function rails(): HasMany
-    {
-        return $this->hasMany(Rail::class);
-    }
-
     public function cadastres(): HasMany
     {
         return $this->hasMany(Cadastre::class);
+    }
+
+    public function branchRailways(): HasMany
+    {
+        return $this->hasMany(BranchRailway::class);
+    }
+
+    public function mainRailways(): HasMany
+    {
+        return $this->hasMany(MainRailway::class);
     }
 }

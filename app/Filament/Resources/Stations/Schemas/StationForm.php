@@ -2,12 +2,13 @@
 
 namespace App\Filament\Resources\Stations\Schemas;
 
-use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Actions\Action;
+use Filament\Support\Enums\Alignment;
 use Filament\Schemas\Schema;
 
 class StationForm
@@ -17,17 +18,19 @@ class StationForm
         return $schema->schema([
             Section::make('Asosiy ma\'lumotlar')
                 ->schema([
-                    Grid::make(2)
+                    Grid::make(3)
                         ->schema([
                             TextInput::make('title')
                                 ->label('Stansiya nomi')
                                 ->required()
-                                ->maxLength(255),
+                                ->maxLength(255)
+                                ->columnSpan(2),
 
                             Select::make('type')
                                 ->label('Ma\'lumot turi')
                                 ->options([
-                                    'station' => "Stansiya"
+                                    'station' => 'Stansiya',
+                                    'enterprise' => 'Korxona',
                                 ])
                                 ->searchable()
                                 ->required(),
@@ -40,6 +43,7 @@ class StationForm
                 ]),
 
             Section::make('Koordinatalar')
+                ->description('GPS koordinatlari va xarita pozitsiyasi')
                 ->schema([
                     Grid::make(2)
                         ->schema([
@@ -57,149 +61,72 @@ class StationForm
                                 ->required()
                                 ->placeholder('69.279737'),
                         ]),
-                ]),
-
-            Section::make('Qo\'shimcha ma\'lumotlar')
-                ->description('Type tanlab, qo\'shimcha ma\'lumotlarni kiriting')
-                ->schema([
+                    
                     Grid::make(2)
                         ->schema([
-                            // Yo'l kodi
-                            TextInput::make('details.road_code')
-                                ->label('Yo\'l kodi')
+                            TextInput::make('coordinates.x')
+                                ->label('X - Gorizontal pozitsiya (%)')
                                 ->numeric()
-                                ->visible(fn ($get) => $get('type') === 'road_code'),
+                                ->step(0.1)
+                                ->minValue(0)
+                                ->maxValue(100)
+                                ->suffix('%')
+                                ->helperText('Xaritada chapdan o\'ngga (0-100)')
+                                ->placeholder('50'),
 
-                            // Temir yo'l tarmoqlari
-                            TextInput::make('details.railway_branch_code')
-                                ->label('Tarmoq kodi')
+                            TextInput::make('coordinates.y')
+                                ->label('Y - Vertikal pozitsiya (%)')
                                 ->numeric()
-                                ->visible(fn ($get) => $get('type') === 'railway_branches'),
-
-                            // ESR stantsiya kodi
-                            TextInput::make('details.esr_code')
-                                ->label('ESR kodi')
-                                ->numeric()
-                                ->visible(fn ($get) => $get('type') === 'esr_code'),
-
-                            // Mamlakat
-                            Select::make('details.country')
-                                ->label('Mamlakat')
-                                ->options([
-                                    'O\'zbekiston' => 'O\'zbekiston',
-                                    'O\'zbekiston Temir Yo\'llari (OTY)' => 'O\'zbekiston Temir Yo\'llari (OTY)',
-                                ])
-                                ->visible(fn ($get) => $get('type') === 'country'),
-
-                            // Yo'l
-                            TextInput::make('details.road_name')
-                                ->label('Yo\'l nomi')
-                                ->visible(fn ($get) => $get('type') === 'road'),
-
-                            // MTU nomi
-                            TextInput::make('details.mtu_name')
-                                ->label('MTU nomi')
-                                ->visible(fn ($get) => $get('type') === 'mtu_name'),
-
-                            // Stansiya toifasi
-                            Select::make('details.station_category')
-                                ->label('Toifa')
-                                ->options([
-                                    'Stansiya' => 'Stansiya',
-                                    'Oraliq' => 'Oraliq',
-                                ])
-                                ->visible(fn ($get) => $get('type') === 'station_category'),
-
-                            // Stansiya vazifasi
-                            Select::make('details.station_function')
-                                ->label('Vazifa')
-                                ->options([
-                                    'Oraliq' => 'Oraliq',
-                                    'Yuk' => 'Yuk',
-                                    'Texnik' => 'Texnik',
-                                ])
-                                ->visible(fn ($get) => $get('type') === 'station_function'),
-
-                            // Stansiya Kategoriyasi
-                            Select::make('details.station_class')
-                                ->label('Kategoriya')
-                                ->options([
-                                    'Beshinchi' => 'Beshinchi',
-                                    'To\'rtinchi' => 'To\'rtinchi',
-                                    'Uchinchi' => 'Uchinchi',
-                                    'Ikkinchi' => 'Ikkinchi',
-                                    'Birinchi' => 'Birinchi',
-                                ])
-                                ->visible(fn ($get) => $get('type') === 'station_class'),
-
-                            // Yuk ishlari
-                            Select::make('details.cargo_operations')
-                                ->label('Yuk ishlari')
-                                ->options([
-                                    'Yuk stantsiyasi' => 'Yuk stantsiyasi',
-                                    'Ajiratilgan' => 'Ajiratilgan',
-                                    'Ha' => 'Ha',
-                                    'Yo\'q' => 'Yo\'q',
-                                ])
-                                ->visible(fn ($get) => $get('type') === 'cargo_operations'),
-
-                            // Stansiya Tarifi qo'llanmasi
-                            TextInput::make('details.tariff_code')
-                                ->label('Tarif qo\'llanmasi')
-                                ->visible(fn ($get) => $get('type') === 'tariff_application'),
-
-                            // Stansiya yuk amallari
-                            Select::make('details.cargo_actions')
-                                ->label('Yuk amallari')
-                                ->options([
-                                    'Ha' => 'Ha',
-                                    'Yo\'q' => 'Yo\'q',
-                                ])
-                                ->visible(fn ($get) => $get('type') === 'cargo_actions'),
-
-                            // Punkt turi
-                            Select::make('details.point_type')
-                                ->label('Punkt turi')
-                                ->options([
-                                    'Ajiratilgan' => 'Ajiratilgan',
-                                    'Ajratilgan' => 'Ajratilgan',
-                                ])
-                                ->visible(fn ($get) => $get('type') === 'point_type'),
-
-                            // Tranzit punkt
-                            Select::make('details.transit_point')
-                                ->label('Tranzit punkt')
-                                ->options([
-                                    'Yo\'q' => 'Yo\'q',
-                                    'Ha' => 'Ha',
-                                ])
-                                ->visible(fn ($get) => $get('type') === 'transit_point'),
-
-                            // Faoliyat yurituvchi
-                            Select::make('details.operator')
-                                ->label('Operator')
-                                ->options([
-                                    'Ha' => 'Ha',
-                                    'Yo\'q' => 'Yo\'q',
-                                ])
-                                ->visible(fn ($get) => $get('type') === 'operator'),
-
-                            // Kenglik
-                            TextInput::make('details.latitude_display')
-                                ->label('Kenglik (ko\'rsatish)')
-                                ->visible(fn ($get) => $get('type') === 'latitude'),
-
-                            // Uzunlik
-                            TextInput::make('details.longitude_display')
-                                ->label('Uzunlik (ko\'rsatish)')
-                                ->visible(fn ($get) => $get('type') === 'longitude'),
-
-                            // Ob-Havo
-                            TextInput::make('details.weather')
-                                ->label('Ob-Havo')
-                                ->suffix('°C')
-                                ->visible(fn ($get) => $get('type') === 'weather'),
+                                ->step(0.1)
+                                ->minValue(0)
+                                ->maxValue(100)
+                                ->suffix('%')
+                                ->helperText('Xaritada tepadan pastga (0-100)')
+                                ->placeholder('50'),
                         ]),
+                ])
+                ->footerActions([
+                    Action::make('viewOnMap')
+                        ->label('Sputnikdan ko\'rish')
+                        ->icon('heroicon-o-globe-alt')
+                        ->url(fn ($get) => 'https://www.google.com/maps?q=' . ($get('coordinates.lat') ?? '41.311151') . ',' . ($get('coordinates.lng') ?? '69.279737') . '&t=k')
+                        ->openUrlInNewTab()
+                        ->color('success')
+                        ->button()
+                        ->extraAttributes(['class' => 'w-full'])
+                        ->visible(fn ($get) => $get('coordinates.lat') && $get('coordinates.lng')),
+                ])
+                ->footerActionsAlignment(Alignment::Start)
+                ->collapsible()
+                ->collapsed(false),
+
+            Section::make('360° ko\'rish')
+                ->description('Stansiyani 360 daraja ko\'rish uchun havola')
+                ->schema([
+                    TextInput::make('details.360_link')
+                        ->label('360° panorama havolasi')
+                        ->url()
+                        ->placeholder('https://example.com/360-view')
+                        ->helperText('360 daraja panorama ko\'rinish uchun URL kiriting')
+                        ->suffixIcon('heroicon-o-globe-alt')
+                        ->columnSpanFull(),
+                ])
+                ->collapsible()
+                ->collapsed(false),
+
+            Section::make('Kadastr rasmi')
+                ->description('Stansiya kadastr pasporti yoki xaritasining rasmi (1 ta rasm)')
+                ->schema([
+                    \Filament\Forms\Components\FileUpload::make('details.cadastre_image')
+                        ->label('Kadastr rasmi')
+                        ->image()
+                        ->directory('cadastres')
+                        ->imageEditor()
+                        ->imagePreviewHeight('250')
+                        ->maxSize(20480)
+                        ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/jpg', 'image/webp'])
+                        ->helperText('Faqat 1 ta rasm. Maksimal hajm: 20MB')
+                        ->columnSpanFull(),
                 ])
                 ->collapsible()
                 ->collapsed(false),
@@ -207,23 +134,20 @@ class StationForm
             Section::make('Bog\'lanish ma\'lumotlari')
                 ->description('Stansiya uchun bog\'lanish ma\'lumotlarini kiriting')
                 ->schema([
-                    Grid::make(3)
-                        ->schema([
-                            TextInput::make('details.contact_name')
-                                ->label('Ism familiya')
-                                ->maxLength(255),
+                    TextInput::make('details.contact_name')
+                        ->label('Ism familiya')
+                        ->maxLength(255),
 
-                            TextInput::make('details.contact_email')
-                                ->label('Elektron pochta')
-                                ->email()
-                                ->maxLength(255),
+                    TextInput::make('details.contact_email')
+                        ->label('Elektron pochta')
+                        ->email()
+                        ->maxLength(255),
 
-                            TextInput::make('details.contact_phone')
-                                ->label('Telefon raqam')
-                                ->tel()
-                                ->placeholder('+998 90 123 45 67')
-                                ->maxLength(20),
-                        ]),
+                    TextInput::make('details.contact_phone')
+                        ->label('Telefon raqam')
+                        ->tel()
+                        ->placeholder('+998 90 123 45 67')
+                        ->maxLength(20),
                 ])
                 ->collapsible()
                 ->collapsed(false),

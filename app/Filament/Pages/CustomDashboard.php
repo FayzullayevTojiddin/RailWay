@@ -22,13 +22,38 @@ class CustomDashboard extends Page
     
     public function getStations()
     {
-        return Station::all(['id', 'title', 'type', 'coordinates'])->map(function ($station) {
-            return [
+        $stations = Station::all();
+        $result = [];
+        
+        foreach ($stations as $station) {
+            $coords = $station->coordinates ?? [];
+            $details = $station->details ?? [];
+            
+            $result[] = [
                 'id' => $station->id,
                 'title' => $station->title,
                 'type' => $station->type,
-                'coordinates' => $station->coordinates ?? ['x' => 50, 'y' => 50]
+                'coordinates' => [
+                    'x' => $coords['x'] ?? 50,
+                    'y' => $coords['y'] ?? 50
+                ],
+                'location' => [
+                    'lat' => $coords['lat'] ?? null,
+                    'lng' => $coords['lng'] ?? null
+                ],
+                'description' => $station->description ?? '',
+                'images' => $station->images ?? [],
+                'details' => [
+                    'employees' => $details['employees'] ?? 0,
+                    'area' => $details['area'] ?? 0,
+                    'branch_tracks' => $details['branch_tracks'] ?? 0,
+                    'railway_tracks' => $details['railway_tracks'] ?? 0,
+                    'facilities' => $details['facilities'] ?? [],
+                    '360_link' => $details['360_link'] ?? null
+                ]
             ];
-        })->toArray();
+        }
+        
+        return $result;
     }
 }

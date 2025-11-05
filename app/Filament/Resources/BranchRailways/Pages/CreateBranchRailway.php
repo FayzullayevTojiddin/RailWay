@@ -1,0 +1,11 @@
+<?php
+
+namespace App\Filament\Resources\BranchRailways\Pages;
+
+use App\Filament\Resources\BranchRailways\BranchRailwayResource;
+use Filament\Resources\Pages\CreateRecord;
+
+class CreateBranchRailway extends CreateRecord
+{
+    protected static string $resource = BranchRailwayResource::class;
+}

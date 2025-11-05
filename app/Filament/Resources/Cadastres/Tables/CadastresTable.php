@@ -7,7 +7,6 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
-use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Actions\ActionGroup;
@@ -18,69 +17,65 @@ class CadastresTable
     {
         return $table
             ->columns([
-                ImageColumn::make('image')
-                    ->label('Rasm')
-                    ->circular()
-                    ->defaultImageUrl(url('/images/placeholder.png')),
-
-                TextColumn::make('station.name')
+                TextColumn::make('station.title')
                     ->label('Stansiya')
                     ->searchable()
                     ->sortable()
                     ->badge()
                     ->color('info'),
 
-                TextColumn::make('details.general.cadastre_number')
+                TextColumn::make('name')
+                    ->label('Bino/inshoot nomi')
+                    ->searchable()
+                    ->sortable()
+                    ->weight('bold'),
+
+                TextColumn::make('cadastre_number')
                     ->label('Kadastr raqami')
                     ->searchable()
                     ->sortable()
                     ->copyable()
-                    ->weight('bold')
+                    ->copyMessage('Nusxalandi!')
                     ->color('primary'),
 
-                TextColumn::make('details.general.passport_number')
-                    ->label('Pasport raqami')
-                    ->searchable()
+                TextColumn::make('floors_count')
+                    ->label('Qavat soni')
+                    ->numeric()
                     ->sortable()
-                    ->copyable()
-                    ->toggleable(),
-
-                TextColumn::make('details.general.cadastre_date')
-                    ->label('Sana')
-                    ->date('d-M, Y')
-                    ->sortable()
-                    ->toggleable(),
-
-                TextColumn::make('details.general.location')
-                    ->label('Joylashuv')
-                    ->limit(40)
-                    ->searchable()
-                    ->wrap()
-                    ->toggleable(),
-
-                TextColumn::make('details.land_info.object_name')
-                    ->label('Obyekt nomi')
-                    ->limit(40)
-                    ->searchable()
-                    ->wrap()
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                TextColumn::make('items_count')
-                    ->label('Binolar soni')
-                    ->getStateUsing(fn ($record) => is_array($record->items) ? count($record->items) : 0)
                     ->badge()
-                    ->color('success')
+                    ->color('warning')
                     ->alignCenter(),
+
+                TextColumn::make('construction_area')
+                    ->label('Qurilish osti')
+                    ->numeric(decimalPlaces: 2)
+                    ->suffix(' kv.m')
+                    ->sortable()
+                    ->alignEnd(),
+
+                TextColumn::make('total_area')
+                    ->label('Umumiy maydon')
+                    ->numeric(decimalPlaces: 2)
+                    ->suffix(' kv.m')
+                    ->sortable()
+                    ->alignEnd(),
+
+                TextColumn::make('useful_area')
+                    ->label('Foydali maydon')
+                    ->numeric(decimalPlaces: 2)
+                    ->suffix(' kv.m')
+                    ->sortable()
+                    ->alignEnd()
+                    ->toggleable(),
+
+                TextColumn::make('details.passport_number')
+                    ->label('Pasport №')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('created_at')
                     ->label('Yaratilgan')
-                    ->dateTime('d-M, Y H:i')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                TextColumn::make('updated_at')
-                    ->label('O\'zgartirilgan')
-                    ->dateTime('d-M, Y H:i')
+                    ->dateTime('d.m.Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
@@ -96,9 +91,11 @@ class CadastresTable
             ])
             ->bulkActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    DeleteBulkAction::make()->label("O'chirish"),
                 ]),
             ])
+            ->emptyStateHeading('Kadastrlar topilmadi')
+            ->emptyStateDescription('Yangi kadastr qo\'shish uchun yuqoridagi tugmani bosing')
             ->defaultSort('created_at', 'desc')
             ->striped();
     }

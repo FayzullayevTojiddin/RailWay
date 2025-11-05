@@ -80,7 +80,8 @@ class EmployeeForm
                         Select::make('station_id')
                             ->label('Stansiya')
                             ->relationship('station', 'title')
-                            ->required()
+                            ->required(fn ($livewire) => !($livewire instanceof \Filament\Resources\RelationManagers\RelationManager))
+                            ->hidden(fn ($livewire) => $livewire instanceof \Filament\Resources\RelationManagers\RelationManager)
                             ->searchable()
                             ->preload(),
 
@@ -95,7 +96,7 @@ class EmployeeForm
                             ->native(false)
                             ->displayFormat('d.m.Y'),
                     ])
-                    ->columns(3),
+                    ->columns(1),
 
                 Section::make('Hujjatlar')
                     ->schema([
@@ -110,72 +111,6 @@ class EmployeeForm
                             ->columnSpanFull(),
                     ]),
 
-                Section::make('Qo\'shimcha ma\'lumotlar')
-                    ->schema([
-                        TextInput::make('details.birth_place')
-                            ->label('Tug\'ilgan joyi')
-                            ->maxLength(255),
-
-                        TextInput::make('details.nationality')
-                            ->label('Millati')
-                            ->maxLength(255)
-                            ->default('O\'zbek'),
-
-                        TextInput::make('details.party_membership')
-                            ->label('Partiyaviyligi')
-                            ->maxLength(255)
-                            ->default('Partiyasiz'),
-
-                        TextInput::make('details.education_level')
-                            ->label('Ma\'lumoti')
-                            ->maxLength(255),
-
-                        TextInput::make('details.education_institution')
-                            ->label('Tamomlagan')
-                            ->maxLength(255),
-
-                        TextInput::make('details.education_year')
-                            ->label('Tamomlagan yili')
-                            ->numeric()
-                            ->minValue(1950)
-                            ->maxValue(date('Y')),
-
-                        TextInput::make('details.specialty')
-                            ->label('Mutaxassisligi')
-                            ->maxLength(255),
-
-                        TextInput::make('details.academic_degree')
-                            ->label('Ilmiy darajasi')
-                            ->maxLength(255)
-                            ->default('Yo\'q'),
-
-                        TextInput::make('details.academic_title')
-                            ->label('Ilmiy unvoni')
-                            ->maxLength(255)
-                            ->default('Yo\'q'),
-
-                        TextInput::make('details.foreign_languages')
-                            ->label('Chet tillar')
-                            ->maxLength(255),
-
-                        TextInput::make('details.military_rank')
-                            ->label('Harbiy unvoni')
-                            ->maxLength(255)
-                            ->default('Yo\'q'),
-
-                        Textarea::make('details.awards')
-                            ->label('Davlat mukofotlari')
-                            ->rows(2)
-                            ->maxLength(500),
-
-                        Textarea::make('details.elected_positions')
-                            ->label('Saylanadigan organlar a\'zoligi')
-                            ->rows(2)
-                            ->maxLength(500),
-                    ])
-                    ->columns(2)
-                    ->collapsible()
-                    ->collapsed(),
 
                 Section::make('Mehnat faoliyati')
                     ->schema([
