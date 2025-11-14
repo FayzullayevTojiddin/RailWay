@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class CadastreAreaChartWidget extends ChartWidget
 {
-    protected ?string $heading = 'Yer maydoni';
+    protected ?string $heading = 'Kadastr maydonlari';
 
     public ?Model $record = null;
 
@@ -21,46 +21,42 @@ class CadastreAreaChartWidget extends ChartWidget
             return [
                 'datasets' => [
                     [
-                        'data' => [0, 0],
-                        'backgroundColor' => ['#f59e0b', '#ec4899'],
+                        'data' => [0, 0, 0],
+                        'backgroundColor' => ['#3b82f6', '#f59e0b', '#10b981'],
                     ],
                 ],
-                'labels' => ['Umumiy osti maydoni', 'Umumiy foydali maydoni'],
+                'labels' => ['Qurilish osti', 'Umumiy maydon', 'Foydali maydon'],
             ];
         }
 
         $cadastres = $this->record->cadastres;
         
+        $totalConstructionArea = 0;
         $totalArea = 0;
         $totalUsefulArea = 0;
 
         foreach ($cadastres as $cadastre) {
-            $items = $cadastre->items ?? [];
-            
-            foreach ($items as $item) {
-                $area = $item['total_area'] ?? 0;
-                if (is_string($area)) {
-                    $area = (float) preg_replace('/[^0-9.]/', '', $area);
-                }
-                
-                $usefulArea = $item['useful_area'] ?? 0;
-                if (is_string($usefulArea)) {
-                    $usefulArea = (float) preg_replace('/[^0-9.]/', '', $usefulArea);
-                }
-                
-                $totalArea += $area;
-                $totalUsefulArea += $usefulArea;
-            }
+            $totalConstructionArea += (float) ($cadastre->construction_area ?? 0);
+            $totalArea += (float) ($cadastre->total_area ?? 0);
+            $totalUsefulArea += (float) ($cadastre->useful_area ?? 0);
         }
 
         return [
             'datasets' => [
                 [
-                    'data' => [$totalArea, $totalUsefulArea],
-                    'backgroundColor' => ['#f59e0b', '#ec4899'],
+                    'data' => [
+                        round($totalConstructionArea, 2),
+                        round($totalArea, 2),
+                        round($totalUsefulArea, 2)
+                    ],
+                    'backgroundColor' => ['#3b82f6', '#f59e0b', '#10b981'],
                 ],
             ],
-            'labels' => ['Umumiy osti maydoni kv-da', 'Umumiy foydali maydoni kv-da'],
+            'labels' => [
+                'Qurilish osti (' . round($totalConstructionArea, 2) . ' kv.m)',
+                'Umumiy maydon (' . round($totalArea, 2) . ' kv.m)',
+                'Foydali maydon (' . round($totalUsefulArea, 2) . ' kv.m)'
+            ],
         ];
     }
     protected function getType(): string

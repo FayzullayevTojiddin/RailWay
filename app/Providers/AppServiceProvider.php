@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Filament\Support\Facades\FilamentView;
+use Filament\View\PanelsRenderHook;
 use Illuminate\Support\Facades\Blade;
 
 class AppServiceProvider extends ServiceProvider
@@ -15,6 +16,7 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // --- 1) Sizning hozirgi login video hook (o'zgarmadi) ---
         FilamentView::registerRenderHook(
             'panels::body.start',
             fn (): string => Blade::render('
@@ -54,6 +56,19 @@ class AppServiceProvider extends ServiceProvider
                 <div class="video-overlay"></div>
                 @endif
             '),
+        );
+
+        // --- 2) Relation manager oldiga Livewire widget qo'shish ---
+        FilamentView::registerRenderHook(
+            PanelsRenderHook::RESOURCE_RELATION_MANAGER_BEFORE,
+            // Bu yerda Livewire komponentni chaqiramiz.
+            // Agar faqat Stations resource sahifalarida ishlashini xohlasangiz,
+            // request()->routeIs() bilan filtr qo'yamiz.
+            fn (): string => Blade::render('
+                @if(request()->routeIs("filament.resources.stations.*"))
+                    @livewire(\'filament.reports-chart-widget\')
+                @endif
+            ')
         );
     }
 }

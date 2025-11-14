@@ -92,11 +92,11 @@ class StationForm
                         ->url(fn ($get) => 'https://www.google.com/maps?q=' . ($get('coordinates.lat') ?? '41.311151') . ',' . ($get('coordinates.lng') ?? '69.279737') . '&t=k')
                         ->openUrlInNewTab()
                         ->color('success')
-                        ->button()
-                        ->extraAttributes(['class' => 'w-full'])
+                        ->size('lg')
+                        ->extraAttributes(['class' => 'w-full justify-center'])
                         ->visible(fn ($get) => $get('coordinates.lat') && $get('coordinates.lng')),
                 ])
-                ->footerActionsAlignment(Alignment::Start)
+                ->footerActionsAlignment(Alignment::Center)
                 ->collapsible()
                 ->collapsed(false),
 

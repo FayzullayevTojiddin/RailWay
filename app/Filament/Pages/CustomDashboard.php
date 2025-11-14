@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use Filament\Pages\Page;
 use BackedEnum;
 use App\Models\Station;
+use Illuminate\Support\Facades\Storage;
 
 class CustomDashboard extends Page
 {
@@ -22,12 +23,17 @@ class CustomDashboard extends Page
     
     public function getStations()
     {
-        $stations = Station::all();
+        $stations = Station::with(['employees', 'cadastres', 'branchRailways', 'mainRailways'])->get();
         $result = [];
         
         foreach ($stations as $station) {
             $coords = $station->coordinates ?? [];
             $details = $station->details ?? [];
+            // Haqiqiy ma'lumotlarni database dan olish
+            $employeesCount = $station->employees->count();
+            $totalArea = $station->cadastres->sum('total_area');
+            $branchRailsCount = $station->branchRailways->count();
+            $mainRailsCount = $station->mainRailways->count();
             
             $result[] = [
                 'id' => $station->id,
@@ -42,12 +48,14 @@ class CustomDashboard extends Page
                     'lng' => $coords['lng'] ?? null
                 ],
                 'description' => $station->description ?? '',
-                'images' => $station->images ?? [],
+                'images' => collect($station->images ?? [])->map(function ($image) {
+                    return url('/station-images/' . $image);
+                })->toArray(),
                 'details' => [
-                    'employees' => $details['employees'] ?? 0,
-                    'area' => $details['area'] ?? 0,
-                    'branch_tracks' => $details['branch_tracks'] ?? 0,
-                    'railway_tracks' => $details['railway_tracks'] ?? 0,
+                    'employees' => $employeesCount,
+                    'area' => round($totalArea, 2),
+                    'branch_tracks' => $branchRailsCount,
+                    'railway_tracks' => $mainRailsCount,
                     'facilities' => $details['facilities'] ?? [],
                     '360_link' => $details['360_link'] ?? null
                 ]

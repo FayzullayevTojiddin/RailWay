@@ -1,0 +1,8 @@
+{
+  "id": "tts/85070f29-22f6-4e29-b4c6-0f98fd7ecbd5/38fdd9fe-c534-4b9f-8934-1999ab204d03",
+  "progress": 1.0,
+  "result": {
+    "url": "https://cdn.uz.uzbekvoice.ai/beta-studio/api_media/tts/85070f29-22f6-4e29-b4c6-0f98fd7ecbd5/38fdd9fe-c534-4b9f-8934-1999ab204d03.wav?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=i8nFiKGACruqM8WB0Zhb%2F20251108%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20251108T121204Z&X-Amz-Expires=345600&X-Amz-SignedHeaders=host&X-Amz-Signature=790f44a96402b31285960ecd9ea020f4f1cf7c1d33c576b119eaba7d890740f0"
+  },
+  "status": "SUCCESS"
+}

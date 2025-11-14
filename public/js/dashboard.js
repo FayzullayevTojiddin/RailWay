@@ -88,7 +88,7 @@ const overlay = new ol.Overlay({
     autoPanAnimation: { duration: 250 }
 });
 
-popupCloser.onclick = function() {
+popupCloser.onclick = function () {
     overlay.setPosition(undefined);
     return false;
 };
@@ -130,7 +130,7 @@ const stationLayer = new ol.layer.Vector({
 
 const railLayer = new ol.layer.Vector({
     source: new ol.source.Vector(),
-    style: function(feature) {
+    style: function (feature) {
         const lineType = feature.get('lineType');
         return new ol.style.Style({
             stroke: new ol.style.Stroke({
@@ -149,10 +149,10 @@ map.addLayer(stationLayer);
 function loadMapData() {
     const stationSource = stationLayer.getSource();
     const railSource = railLayer.getSource();
-    
+
     stationSource.clear();
     railSource.clear();
-    
+
     // Stansiyalarni qo'shish
     Object.keys(stationsData).forEach(key => {
         const station = stationsData[key];
@@ -164,12 +164,12 @@ function loadMapData() {
         });
         stationSource.addFeature(feature);
     });
-    
+
     // Chiziqlarni qo'shish
     railLinesData.forEach(line => {
         if (line.type === 'electrified' && !showElectrified) return;
         if (line.type === 'unelectrified' && !showUnelectrified) return;
-        
+
         const feature = new ol.Feature({
             geometry: new ol.geom.LineString(line.coords),
             lineType: line.type,
@@ -191,20 +191,19 @@ document.getElementById('zoomOut').addEventListener('click', () => {
 });
 
 // Filter toggles
-document.getElementById('toggleElectrified').addEventListener('change', function() {
+document.getElementById('toggleElectrified').addEventListener('change', function () {
     showElectrified = this.checked;
     loadMapData();
 });
 
-document.getElementById('toggleUnelectrified').addEventListener('change', function() {
+document.getElementById('toggleUnelectrified').addEventListener('change', function () {
     showUnelectrified = this.checked;
     loadMapData();
 });
 
 // Map type selector
-document.getElementById('mapType').addEventListener('change', function() {
+document.getElementById('mapType').addEventListener('change', function () {
     // Bu yerda xarita turini o'zgartirish logikasi
-    console.log('Map type changed to:', this.value);
     // Keyinchalik turli xarita rasmlari o'rnatiladi
 });
 
@@ -216,7 +215,7 @@ const overlay_bg = document.querySelector('.overlay');
 function openSidebar(stationId) {
     const station = stationsData[stationId];
     if (!station) return;
-    
+
     const sidebarContent = document.querySelector('.sidebar-content');
     sidebarContent.innerHTML = `
         <div class="info-card">
@@ -264,7 +263,7 @@ function openSidebar(stationId) {
             </div>
         </div>
     `;
-    
+
     sidebar.classList.add('active');
     overlay_bg.classList.add('active');
 }
@@ -278,20 +277,20 @@ sidebarClose.addEventListener('click', closeSidebar);
 overlay_bg.addEventListener('click', closeSidebar);
 
 // Click event
-map.on('singleclick', function(evt) {
-    const feature = map.forEachFeatureAtPixel(evt.pixel, function(feature) {
+map.on('singleclick', function (evt) {
+    const feature = map.forEachFeatureAtPixel(evt.pixel, function (feature) {
         return feature;
     });
-    
+
     if (feature) {
         const stationId = feature.get('stationId');
-        
+
         if (stationId) {
             openSidebar(stationId);
         } else {
             const coords = feature.getGeometry().getCoordinates()[0];
             const lineName = feature.get('name');
-            
+
             popupContent.innerHTML = `
                 <div class="popup-title">${lineName}</div>
                 <div class="popup-type">Temir yo'l liniyasi</div>
@@ -302,7 +301,7 @@ map.on('singleclick', function(evt) {
 });
 
 // Hover effect
-map.on('pointermove', function(evt) {
+map.on('pointermove', function (evt) {
     const pixel = map.getEventPixel(evt.originalEvent);
     const hit = map.hasFeatureAtPixel(pixel);
     map.getTargetElement().style.cursor = hit ? 'pointer' : '';

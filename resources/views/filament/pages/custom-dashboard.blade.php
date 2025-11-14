@@ -1,6 +1,5 @@
 <div>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
@@ -126,8 +125,8 @@
         
         .train-animation {
             position: absolute;
-            width: 32px;
-            height: 32px;
+            width: 40px;
+            height: 40px;
             z-index: 5;
             pointer-events: none;
         }
@@ -135,17 +134,17 @@
         .train-body {
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+            background: #10b981;
             border-radius: 50%;
-            border: 2px solid #ffffff;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
             display: flex;
             align-items: center;
             justify-content: center;
         }
         
-        .train-body span {
-            font-size: 20px;
+        .train-body img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
         
         .map-type-option {
@@ -210,7 +209,7 @@
                                         :data-station-id="station.id"
                                         @click="openStationDetails(station)"
                                     >
-                                        <img src="/storage/station-icon.png" alt="Station" style="width: 100%; height: 100%; object-fit: contain;" />
+                                        <img :src="getStationIcon(station.type)" :alt="station.type" style="width: 100%; height: 100%; object-fit: contain;" />
                                     </div>
                                 </template>
                             </template>
@@ -223,7 +222,7 @@
                                         :style="`left: ${train.x}%; top: ${train.y}%; transform: translate(-50%, -50%);`"
                                     >
                                         <div class="train-body">
-                                            <span>🚂</span>
+                                            <img src="/storage/train-icon.png" alt="Train" />
                                         </div>
                                     </div>
                                 </template>
@@ -370,6 +369,7 @@
                                     :src="selectedStation.images[currentImageIndex]" 
                                     class="w-full h-full object-cover"
                                     :alt="'Station image ' + (currentImageIndex + 1)"
+                                    x-on:error="$el.src = 'https://via.placeholder.com/800x400?text=Image+Not+Found'"
                                 />
                                 
                                 <!-- Prev tugma -->
@@ -426,19 +426,19 @@
                             <div class="grid grid-cols-2 gap-3 mb-6">
                                 <div class="bg-blue-50 rounded-lg p-3">
                                     <div class="text-xs text-gray-500 mb-1">Xodimlar soni</div>
-                                    <div class="text-xl font-bold text-blue-600" x-text="selectedStation.details.employees || '120'"></div>
+                                    <div class="text-xl font-bold text-blue-600" x-text="selectedStation.details.employees"></div>
                                 </div>
                                 <div class="bg-green-50 rounded-lg p-3">
                                     <div class="text-xs text-gray-500 mb-1">Umumiy maydoni</div>
-                                    <div class="text-xl font-bold text-green-600" x-text="(selectedStation.details.area || '5000') + ' m²'"></div>
+                                    <div class="text-xl font-bold text-green-600" x-text="selectedStation.details.area + ' m²'"></div>
                                 </div>
                                 <div class="bg-purple-50 rounded-lg p-3">
                                     <div class="text-xs text-gray-500 mb-1">Shaxobcha yo'llari</div>
-                                    <div class="text-xl font-bold text-purple-600" x-text="selectedStation.details.branch_tracks || '8'"></div>
+                                    <div class="text-xl font-bold text-purple-600" x-text="selectedStation.details.branch_tracks"></div>
                                 </div>
                                 <div class="bg-orange-50 rounded-lg p-3">
                                     <div class="text-xs text-gray-500 mb-1">Temir yo'llari</div>
-                                    <div class="text-xl font-bold text-orange-600" x-text="selectedStation.details.railway_tracks || '12'"></div>
+                                    <div class="text-xl font-bold text-orange-600" x-text="selectedStation.details.railway_tracks"></div>
                                 </div>
                             </div>
                         </template>
@@ -545,6 +545,25 @@
             </div>
         </div>
 
+        <!-- AI Voice Assistant -->
+        <div x-data="voiceAssistant()" class="fixed bottom-6 right-6 z-[1004]">
+            <!-- Microphone Button -->
+            <button 
+                @click="toggleVoice()"
+                class="w-16 h-16 rounded-full shadow-2xl flex items-center justify-center text-white transition-all duration-300"
+                :class="{
+                    'bg-gradient-to-r from-red-600 to-pink-600 animate-pulse scale-110': isListening,
+                    'bg-gradient-to-r from-green-600 to-emerald-600 animate-pulse': isSpeaking,
+                    'bg-gradient-to-r from-blue-600 to-indigo-600 hover:scale-110': !isListening && !isSpeaking
+                }"
+                :title="isListening ? 'Eshityapman...' : (isSpeaking ? 'Gapiryapman...' : 'AI bilan gaplashish')"
+            >
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                </svg>
+            </button>
+        </div>
+
     </div>
 
     <script>
@@ -572,24 +591,6 @@
                 },
                 
                 init() {
-                    console.log('=== FRONTEND DEBUG START ===');
-                    console.log('Total stations:', this.stations.length);
-                    
-                    this.stations.forEach((station, index) => {
-                        console.log(`Station ${index + 1}: ${station.title}`);
-                        console.log('  - Has coordinates:', !!station.coordinates);
-                        console.log('  - Coordinates:', station.coordinates);
-                        console.log('  - Has x:', station.coordinates?.x);
-                        console.log('  - Has y:', station.coordinates?.y);
-                    });
-                    console.log('=== DEBUG END ===');
-                    
-                    console.log('⭐ Stations from backend:', this.stations);
-                    console.log('⭐ Stations type:', typeof this.stations);
-                    console.log('⭐ Is Array:', Array.isArray(this.stations));
-                    console.log('⭐ Stations length:', this.stations?.length);
-                    console.log('⭐ Stations JSON:', JSON.stringify(this.stations));
-                    
                     this.initTrains();
                     this.startTrainAnimation();
                     
@@ -606,9 +607,7 @@
                 
                 toggleFullscreen() {
                     if (!document.fullscreenElement) {
-                        document.documentElement.requestFullscreen().catch(err => {
-                            console.error('Fullscreen error:', err);
-                        });
+                        document.documentElement.requestFullscreen().catch(err => {});
                     } else {
                         document.exitFullscreen();
                     }
@@ -618,12 +617,8 @@
                     try {
                         // Agar allaqachon yaratilgan bo'lsa, qaytish
                         if (this.realMap) {
-                            console.log('Real map already initialized');
                             return;
                         }
-                        
-                        console.log('Initializing real map...');
-                        console.log('Leaflet available:', typeof L !== 'undefined');
                         
                         this.realMap = L.map('real-map', {
                             center: [41.2995, 69.2401],
@@ -637,19 +632,18 @@
                     }).addTo(this.realMap);
 
                         this.addMarkersToRealMap();
-                        console.log('Real map initialized successfully');
                     } catch (error) {
-                        console.error('Error initializing real map:', error);
+                        // Map initialization failed
                     }
                 },
 
                 addMarkersToRealMap() {
                     this.stations.forEach(station => {
                         if (station.location && station.location.lat && station.location.lng) {
-                            const markerColor = station.type === 'enterprise' ? 'orange' : 'blue';
+                            const iconUrl = this.getStationIcon(station.type);
                             
                             const customIcon = L.icon({
-                                iconUrl: '/storage/station-icon.png',
+                                iconUrl: iconUrl,
                                 iconSize: [50, 50],
                                 iconAnchor: [25, 50],
                                 popupAnchor: [0, -50]
@@ -695,7 +689,6 @@
                     this.trains = [];
                     
                     if (!this.stations || this.stations.length < 5) {
-                        console.warn('Not enough stations to initialize trains');
                         return;
                     }
                     
@@ -745,8 +738,6 @@
                             speed: 0.05 + (i * 0.01)
                         });
                     });
-                    
-                    console.log('Trains initialized:', this.trains.length, 'trains on', routes.length / 2, 'routes');
                 },
                 
                 startTrainAnimation() {
@@ -757,7 +748,6 @@
                                 const targetStation = this.stations[targetStationIndex];
                                 
                                 if (!targetStation || !targetStation.coordinates) {
-                                    console.warn('Invalid target station coordinates');
                                     return;
                                 }
                                 
@@ -887,6 +877,16 @@
                     return types[type] || 'Stantsiya';
                 },
                 
+                getStationIcon(type) {
+                    const icons = {
+                        'station': '/storage/station-icon.png',
+                        'terminal': '/storage/terminal-icon.png',
+                        'junction': '/storage/junction-icon.png',
+                        'enterprise': '/storage/enterprise-icon.png'
+                    };
+                    return icons[type] || '/storage/station-icon.png';
+                },
+                
                 goToStationDetails() {
                     window.location.href = `/super/stations/${this.selectedStation.id}`;
                 },
@@ -899,6 +899,198 @@
 
                 openImageViewer(index) {
                     this.currentImageIndex = index;
+                }
+            }
+        }
+        
+        function voiceAssistant() {
+            return {
+                isListening: false,
+                isSpeaking: false,
+                mediaRecorder: null,
+                audioChunks: [],
+                audioElement: null,
+                
+                toggleVoice() {
+                    if (this.isListening || this.isSpeaking) {
+                        this.stopAll();
+                    } else {
+                        this.startListening();
+                    }
+                },
+                
+                stopAll() {
+                    this.isListening = false;
+                    
+                    // Audio yozishni to'xtatish
+                    if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+                        this.mediaRecorder.stop();
+                    }
+                    
+                    // Audio o'ynashni to'xtatish
+                    if (this.audioElement) {
+                        this.audioElement.pause();
+                        this.audioElement = null;
+                    }
+                    
+                    this.isSpeaking = false;
+                },
+                
+                async startListening() {
+                    try {
+                        this.isListening = true;
+                        
+                        // Mikrofonga ruxsat so'rash
+                        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                        
+                        this.audioChunks = [];
+                        this.mediaRecorder = new MediaRecorder(stream);
+                        
+                        this.mediaRecorder.ondataavailable = (event) => {
+                            this.audioChunks.push(event.data);
+                        };
+                        
+                        this.mediaRecorder.onstop = async () => {
+                            const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
+                            
+                            try {
+                                const response = await this.sendAudioToBackend(audioBlob);
+                                this.isListening = false;
+                                
+                                if (response.success) {
+                                    const message = response.response || response.message || 'Javob yo\'q';
+                                    
+                                    if (response.task_id) {
+                                        this.pollTtsStatus(response.task_id, message);
+                                    } else if (response.audio_url) {
+                                        this.playAudio(response.audio_url);
+                                    }
+                                } else {
+                                    this.isListening = false;
+                                }
+                            } catch (error) {
+                                this.isListening = false;
+                            }
+                            
+                            // Stream to'xtatish
+                            stream.getTracks().forEach(track => track.stop());
+                        };
+                        
+                        // Audio yozishni boshlash
+                        this.mediaRecorder.start();
+                        
+                        // 5 soniyadan keyin avtomatik to'xtatish
+                        setTimeout(() => {
+                            if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+                                this.mediaRecorder.stop();
+                            }
+                        }, 5000);
+                        
+                    } catch (error) {
+                        this.isListening = false;
+                        alert('Mikrofonga ruxsat berilmadi. Iltimos brauzer sozlamalarini tekshiring.');
+                    }
+                },
+                
+                async sendAudioToBackend(audioBlob) {
+                    try {
+                        const formData = new FormData();
+                        formData.append('audio', audioBlob, 'recording.webm');
+                        
+                        const response = await fetch('/api/voice/process', {
+                            method: 'POST',
+                            headers: {
+                                'Accept': 'application/json'
+                            },
+                            body: formData
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error('HTTP xato: ' + response.status);
+                        }
+                        
+                        return await response.json();
+                    } catch (error) {
+                        throw error;
+                    }
+                },
+                
+                async pollTtsStatus(taskId, fallbackText, maxAttempts = 30) {
+                    let attempt = 0;
+                    
+                    const checkStatus = async () => {
+                        attempt++;
+                        
+                        try {
+                            const response = await fetch(`/api/tts/status/${taskId}`);
+                            
+                            if (!response.ok) {
+                                throw new Error('Status tekshirishda xato');
+                            }
+                            
+                            const data = await response.json();
+                            
+                            // SUCCESS bo'lganda
+                            if (data.status === 'SUCCESS' && data.audio_url) {
+                                this.playAudio(data.audio_url);
+                                return;
+                            }
+                            
+                            // FAILED bo'lsa
+                            if (data.status === 'FAILED' || data.status === 'ERROR') {
+                                return;
+                            }
+                            
+                            // Yana kutish
+                            if (attempt < maxAttempts) {
+                                setTimeout(checkStatus, 1000);
+                            }
+                            
+                        } catch (error) {
+                            if (attempt < maxAttempts) {
+                                setTimeout(checkStatus, 1000);
+                            }
+                        }
+                    };
+                    
+                    checkStatus();
+                },
+                
+                playAudio(audioUrl) {
+                    this.isSpeaking = true;
+                    
+                    this.audioElement = new Audio(audioUrl);
+                    
+                    this.audioElement.onended = () => {
+                        this.isSpeaking = false;
+                        this.audioElement = null;
+                    };
+                    
+                    this.audioElement.onerror = () => {
+                        this.isSpeaking = false;
+                        this.audioElement = null;
+                    };
+                    
+                    this.audioElement.play();
+                },
+                
+                speakResponse(text) {
+                    // Google TTS o'chirildi - faqat UzbekVoice.ai ishlatiladi
+                    this.isSpeaking = false;
+                    
+                    // ========== GOOGLE TTS (o'chirilgan) ==========
+                    // if ('speechSynthesis' in window) {
+                    //     this.isSpeaking = true;
+                    //     const utterance = new SpeechSynthesisUtterance(text);
+                    //     utterance.lang = 'uz-UZ';
+                    //     utterance.rate = 0.9;
+                    //     utterance.pitch = 1.0;
+                    //     utterance.volume = 1.0;
+                    //     utterance.onend = () => {
+                    //         this.isSpeaking = false;
+                    //     };
+                    //     window.speechSynthesis.speak(utterance);
+                    // }
                 }
             }
         }

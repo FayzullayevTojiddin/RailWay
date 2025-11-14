@@ -19,6 +19,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use UnitEnum;
 use App\Filament\Resources\Stations\RelationManagers\CadastresRelationManager;
+use App\Filament\Resources\Stations\RelationManagers\ReportsRelationManager;
 
 class StationResource extends Resource
 {
@@ -71,7 +72,8 @@ class StationResource extends Resource
             EmployeesRelationManager::class,
             BranchRailwaysRelationManager::class,
             MainRailwaysRelationManager::class,
-            CadastresRelationManager::class
+            CadastresRelationManager::class,
+            ReportsRelationManager::class
         ];
     }
 

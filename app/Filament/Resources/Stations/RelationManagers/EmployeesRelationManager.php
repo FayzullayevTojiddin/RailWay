@@ -6,8 +6,8 @@ use App\Filament\Resources\Employees\Schemas\EmployeeForm;
 use App\Filament\Resources\Employees\Tables\EmployeesTable;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
-use Filament\Tables\Table;
 use Filament\Actions\CreateAction;
+use Filament\Tables\Table;
 use Illuminate\Contracts\View\View;
 
 class EmployeesRelationManager extends RelationManager
@@ -21,8 +21,6 @@ class EmployeesRelationManager extends RelationManager
     {
         $schema = EmployeeForm::configure($schema);
         
-        // Station relation manager da bo'lganimiz uchun station_id fieldni yashiramiz
-        // Chunki station avtomatik owner record dan olinadi
         $components = collect($schema->getComponents())
             ->map(function ($section) {
                 if (method_exists($section, 'getChildComponents')) {

@@ -1,8 +1,24 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\MapController;
+
+// Private rasmlarni ko'rsatish
+Route::get('/station-images/{filename}', function ($filename) {
+    // Database dan to'liq yo'l keladi: stations/image.jpg
+    $path = $filename;
+    
+    if (!Storage::disk('private')->exists($path)) {
+        abort(404);
+    }
+    
+    $file = Storage::disk('private')->get($path);
+    $mimeType = Storage::disk('private')->mimeType($path);
+    
+    return response($file, 200)->header('Content-Type', $mimeType);
+})->where('filename', '.*')->name('station.image');
 
 Route::get('/employees/{id}/download', [EmployeeController::class, 'download'])
     ->middleware('auth')

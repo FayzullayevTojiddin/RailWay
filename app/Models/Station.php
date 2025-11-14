@@ -44,4 +44,9 @@ class Station extends Model
     {
         return $this->hasMany(MainRailway::class);
     }
+
+    public function reports(): HasMany
+    {
+        return $this->hasMany(Report::class);
+    }
 }
