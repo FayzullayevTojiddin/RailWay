@@ -65,7 +65,6 @@ class MapController extends Controller
             'details' => $station->details ?? [],
             'employees_count' => $station->employees()->count(),
             'branch_railways_count' => $station->branchRailways()->count(),
-            'main_railways_count' => $station->mainRailways()->count(),
             'cadastres_count' => $station->cadastres()->count()
         ]);
     }

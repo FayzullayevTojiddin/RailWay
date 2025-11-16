@@ -185,6 +185,65 @@
             margin: 8px;
             min-width: 200px;
         }
+
+        .train-animation {
+            position: absolute;
+            width: 34px;      /* KICHIKLASHTIRILDI */
+            height: 34px;     /* KICHIKLASHTIRILDI */
+            z-index: 5;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+        }
+
+        /* Train container doira, overflow hidden bilan rasmni crop qiladi */
+        .train-body {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;   /* DOIRA */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;     /* rasmni doira ichida kesish uchun */
+            background: white;    /* rasm shaffof bo'lsa fallback */
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        }
+
+        /* Rasm doira ichida o'rtalanadi va to'liq to'ldiradi */
+        .train-body img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;    /* doirani to'liq to'ldirish uchun */
+            display: block;
+        }
+
+        /* Electric / Diesel uchun vizual farqlash (ixtiyoriy) */
+        .train-body.electric {
+            border: 2px solid rgba(16,185,129,0.14);
+        }
+
+        .train-body.diesel {
+            border: 2px solid rgba(245,158,11,0.14);
+        }
+
+        .station-marker.enterprise {
+            width: 24px !important;    /* oldingi 20 yoki 12 o'rniga 24 */
+            height: 24px !important;
+        }
+
+        .station-marker.enterprise img {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: contain;
+            display: block;
+        }
+
+        /* Tanlangan enterprise markeriga biroz kattaroq effekt */
+        .station-marker.station-selected.enterprise {
+            transform: translate(-50%, -50%) scale(1.3);
+            z-index: 110;
+        }
+
+        
     </style>
 
     <div x-data="mapComponent()" x-init="init()" class="fixed inset-0 w-full h-screen overflow-hidden">
@@ -221,8 +280,14 @@
                                         class="train-animation"
                                         :style="`left: ${train.x}%; top: ${train.y}%; transform: translate(-50%, -50%);`"
                                     >
-                                        <div class="train-body">
-                                            <img src="/storage/train-icon.png" alt="Train" />
+                                        <!-- <div class="train-body">
+                                            <img :src="getTrainIcon(train.type)" :alt="train.type + ' train'" />
+                                        </div> -->
+                                        <div class="train-animation"
+                                            :style="`left: ${train.x}%; top: ${train.y}%; transform: translate(-50%, -50%);`">
+                                            <div class="train-body" :class="train.type">
+                                                <img :src="getTrainIcon(train.type)" :alt="train.type + ' train'"/>
+                                            </div>
                                         </div>
                                     </div>
                                 </template>
@@ -436,10 +501,6 @@
                                     <div class="text-xs text-gray-500 mb-1">Shaxobcha yo'llari</div>
                                     <div class="text-xl font-bold text-purple-600" x-text="selectedStation.details.branch_tracks"></div>
                                 </div>
-                                <div class="bg-orange-50 rounded-lg p-3">
-                                    <div class="text-xs text-gray-500 mb-1">Temir yo'llari</div>
-                                    <div class="text-xl font-bold text-orange-600" x-text="selectedStation.details.railway_tracks"></div>
-                                </div>
                             </div>
                         </template>
                         
@@ -594,12 +655,10 @@
                     this.initTrains();
                     this.startTrainAnimation();
                     
-                    // Leaflet uchun DOM tayyor bo'lishi kutiladi
                     setTimeout(() => {
                         this.initRealMap();
                     }, 100);
                     
-                    // Fullscreen change event listener
                     document.addEventListener('fullscreenchange', () => {
                         this.isFullscreen = !!document.fullscreenElement;
                     });
@@ -615,7 +674,6 @@
                 
                 initRealMap() {
                     try {
-                        // Agar allaqachon yaratilgan bo'lsa, qaytish
                         if (this.realMap) {
                             return;
                         }
@@ -633,25 +691,52 @@
 
                         this.addMarkersToRealMap();
                     } catch (error) {
-                        // Map initialization failed
+                        
                     }
                 },
 
                 addMarkersToRealMap() {
+                    // Oldingi markerlarni olib tashlash
+                    Object.values(this.mapMarkers).forEach(m => {
+                        try { this.realMap.removeLayer(m); } catch(e) {}
+                    });
+                    this.mapMarkers = {};
+
                     this.stations.forEach(station => {
                         if (station.location && station.location.lat && station.location.lng) {
                             const iconUrl = this.getStationIcon(station.type);
-                            
-                            const customIcon = L.icon({
-                                iconUrl: iconUrl,
-                                iconSize: [50, 50],
-                                iconAnchor: [25, 50],
-                                popupAnchor: [0, -50]
+                            const isEnterprise = station.type === 'enterprise';
+
+                            // REAL MAP uchun enterprise biroz kattaroq: 18px
+                            const sizePx = isEnterprise ? 18 : 50;
+                            const anchorX = Math.round(sizePx / 2);
+                            const anchorY = sizePx;
+
+                            const customIcon = L.divIcon({
+                                className: 'custom-station-divicon',
+                                html: `<img class="marker-img ${isEnterprise ? 'marker-enterprise' : ''}" src="${iconUrl}" alt="${station.title}" style="width:${sizePx}px;height:${sizePx}px;display:block;object-fit:contain;" />`,
+                                iconSize: [sizePx, sizePx],
+                                iconAnchor: [anchorX, anchorY],
+                                popupAnchor: [0, -anchorY]
                             });
 
                             const marker = L.marker([station.location.lat, station.location.lng], {
                                 icon: customIcon
                             }).addTo(this.realMap);
+
+                            // DOM hosil bo'lgach qat'iy majburlash
+                            setTimeout(() => {
+                                const el = marker.getElement();
+                                if (el) {
+                                    const img = el.querySelector('img.marker-img');
+                                    if (img) {
+                                        img.style.width = sizePx + 'px';
+                                        img.style.height = sizePx + 'px';
+                                        img.style.objectFit = 'contain';
+                                        img.style.display = 'block';
+                                    }
+                                }
+                            }, 20);
 
                             const popupContent = `
                                 <div class="p-2">
@@ -684,50 +769,84 @@
                         this.openStationDetails(station);
                     }
                 },
-                
+
                 initTrains() {
                     this.trains = [];
-                    
+
                     if (!this.stations || this.stations.length < 5) {
                         return;
                     }
-                    
-                    // Marshrut 1: Kelif -> RZD -> Surxonobod -> Boldir -> Sherobod -> Naushaxar -> Uchqizil -> Termiz
-                    const route1Stations = ['Kelif', 'RZD', 'Surxonobod', 'Boldir', 'Werobod', 'Naushaxar', 'Uchqizil', 'Termez'];
+
+                    // Route 1 (diesel) — o'zgarmadi (agar kerak bo'lsa shu yerni ham tahrirlashingiz mumkin)
+                    const route1Stations = [
+                        'Quduqli',
+                        'Sariosiyo',
+                        'Denov',
+                        'Xayrabod',
+                        "Sho'rchi",
+                        'Elbayon',
+                        "Qumqo'rg'on"
+                    ];
                     const route1 = route1Stations
                         .map(name => this.stations.findIndex(s => s.title === name))
                         .filter(idx => idx !== -1);
-                    
-                    // Marshrut 2: Termez -> Baqtriya -> Jarqorgon -> Zartepa -> Surxan -> Qumqorgon -> Elbayon -> Shorchi -> Xayrabod -> Danau -> Sariasiya -> Quduqli
-                    const route2Stations = ['Termez', 'Baqtriya', 'Jarqorgon', 'Zartepa', 'Surxan', 'Qumqorgon', 'Elbayon', 'Shorchi', 'Xayrabod', 'Danau', 'Sariasiya', 'Quduqli'];
+
+                    // Route 2 (electric) — siz bergan tartibda
+                    const route2Stations = [
+                        'Oqnazar',
+                        "Sho'rob",
+                        'PCH-15',
+                        'Darband',
+                        'Boysun',
+                        'Pulhakim',
+                        'Tangimush',
+                        'Oqjar',
+                        "Qumqo'rg'on",
+                        'Surxon',
+                        'Zartepa',
+                        "Jarqo'rg'on",
+                        'Baktriya',
+                        'Termiz'
+                    ];
                     const route2 = route2Stations
                         .map(name => this.stations.findIndex(s => s.title === name))
                         .filter(idx => idx !== -1);
-                    
-                    // Marshrut 3: Qumqorgon -> Aqdajar -> Tangimush -> Pulxakim -> Boysun -> Darband -> Shurab -> Aknazar
-                    const route3Stations = ['Qumqorgon', 'Aqdajar', 'Tangimush', 'Pulxakim', 'Boysun', 'Darband', 'Shurab', 'Aknazar'];
+
+                    // Route 3 (diesel) — aslida qoladi
+                    const route3Stations = [
+                        'Surxonobod',
+                        'Boldir',
+                        'Sherabod',
+                        'Naushaxar',
+                        'Uchqizil',
+                        'Termiz'
+                    ];
                     const route3 = route3Stations
                         .map(name => this.stations.findIndex(s => s.title === name))
                         .filter(idx => idx !== -1);
-                    
+
                     const routes = [];
-                    
-                    // Har bir marshrut uchun faqat 1 ta poyezd
+                    const trainTypes = [];
+
                     if (route1.length >= 3) {
                         routes.push(route1);
+                        trainTypes.push('diesel');
                     }
-                    
+
                     if (route2.length >= 3) {
                         routes.push(route2);
+                        trainTypes.push('electric');
                     }
-                    
+
                     if (route3.length >= 3) {
                         routes.push(route3);
+                        trainTypes.push('diesel');
                     }
-                    
+
                     routes.forEach((route, i) => {
                         const startStation = this.stations[route[0]];
-                        
+                        if (!startStation || !startStation.coordinates) return;
+
                         this.trains.push({
                             x: startStation.coordinates.x,
                             y: startStation.coordinates.y,
@@ -735,11 +854,22 @@
                             route: route,
                             currentRouteIndex: 0,
                             direction: 1, // 1 = oldinga, -1 = orqaga
-                            speed: 0.05 + (i * 0.01)
+                            speed: 0.05 + (i * 0.01),
+                            type: trainTypes[i]
                         });
                     });
                 },
                 
+                getTrainIcon(type) {
+                    
+                    const icons = {
+                        'electric': '/storage/train-electric.png',
+                        'diesel': '/storage/train-diesel.png'
+                    };
+                    
+                    return icons[type] || '/storage/train-icon.png';
+                },
+
                 startTrainAnimation() {
                     this.trainInterval = setInterval(() => {
                         if (this.mapType === 'schematic' && this.trains.length > 0) {
@@ -756,16 +886,32 @@
                                 const distance = Math.sqrt(dx * dx + dy * dy);
                                 
                                 if (distance < 1) {
-                                    train.currentRouteIndex += train.direction;
-                                    
-                                    // Oxiriga yetganda yo'nalishni o'zgartirish
-                                    if (train.currentRouteIndex >= train.route.length) {
+                                    // Hozirga stansiyaga yetib bordi — keyingi indexni aniqlaymiz
+                                    const nextIndex = train.currentRouteIndex + train.direction;
+
+                                    // Agar keyingi index marshrut tashqarisiga chiqsa — cheklovlarni qo'llaymiz (oxir/bosh)
+                                    if (nextIndex >= train.route.length) {
+                                        // marshrut oxiriga yetdi — orqaga qayt
                                         train.currentRouteIndex = train.route.length - 2;
-                                        train.direction = -1; // orqaga
-                                    } else if (train.currentRouteIndex < 0) {
+                                        train.direction = -1;
+                                    } else if (nextIndex < 0) {
+                                        // marshrut boshiga yetdi — oldinga qayt
                                         train.currentRouteIndex = 1;
-                                        train.direction = 1; // oldinga
+                                        train.direction = 1;
+                                    } else {
+                                        // normal holatda indexni yangilaymiz
+                                        train.currentRouteIndex = nextIndex;
                                     }
+
+                                    // --- MINIMAL JOY: agar elektr poyezd Oqnazar stansiyasiga yetgan bo'lsa, darhol orqaga o'girilsin ---
+                                    // nextStation ob'ektini aniqlab olamiz
+                                    const arrivedStation = this.stations[ train.route[ train.currentRouteIndex ] ];
+                                    if (train.type === 'electric' && arrivedStation && arrivedStation.title === 'Oqnazar') {
+                                        train.direction = -1;
+                                        // agar xohlasangiz shu yerda train.currentRouteIndex ni ham moslab qo'yish mumkin,
+                                        // lekin yuqoridagi yo'l allaqachon indexni to'g'ri yangilaydi.
+                                    }
+
                                 } else {
                                     train.x += (dx / distance) * train.speed;
                                     train.y += (dy / distance) * train.speed;
@@ -869,22 +1015,22 @@
                 
                 getStationType(type) {
                     const types = {
-                        'station': 'Stantsiya',
-                        'terminal': 'Terminal',
-                        'junction': 'Tutashuv',
-                        'enterprise': 'Korxona'
+                        'big_station': 'Stantsiya',
+                        'small_station': 'Stantsiya',
+                        'enterprise': 'Korxona',
+                        'bridge': 'Ko\'prik'
                     };
                     return types[type] || 'Stantsiya';
                 },
                 
                 getStationIcon(type) {
                     const icons = {
-                        'station': '/storage/station-icon.png',
-                        'terminal': '/storage/terminal-icon.png',
-                        'junction': '/storage/junction-icon.png',
-                        'enterprise': '/storage/enterprise-icon.png'
+                        'big_station': '/storage/big-station-icon.png',
+                        'small_station': '/storage/small-station-icon.png',
+                        'enterprise': '/storage/enterprise-icon.png',
+                        'bridge': '/storage/bridge-icon.png',
                     };
-                    return icons[type] || '/storage/station-icon.png';
+                    return icons[type] || '/storage/big-station-icon.png';
                 },
                 
                 goToStationDetails() {
@@ -927,7 +1073,6 @@
                         this.mediaRecorder.stop();
                     }
                     
-                    // Audio o'ynashni to'xtatish
                     if (this.audioElement) {
                         this.audioElement.pause();
                         this.audioElement = null;
@@ -959,11 +1104,11 @@
                                 
                                 if (response.success) {
                                     const message = response.response || response.message || 'Javob yo\'q';
-                                    
+
                                     if (response.task_id) {
                                         this.pollTtsStatus(response.task_id, message);
-                                    } else if (response.audio_url) {
-                                        this.playAudio(response.audio_url);
+                                    } else if (response.audio.remote_url) {
+                                        this.playAudio(response.audio.remote_url);
                                     }
                                 } else {
                                     this.isListening = false;

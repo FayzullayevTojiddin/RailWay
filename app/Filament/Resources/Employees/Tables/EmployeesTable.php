@@ -108,11 +108,11 @@ class EmployeesTable
                     ]),
             ])
             ->actions([
-                Action::make('download_pdf')
-                    ->label('PDF')
-                    ->icon('heroicon-o-arrow-down-tray')
+                Action::make('download_word')
+                    ->label('Word')
+                    ->icon('heroicon-o-document-text')
                     ->color('success')
-                    ->visible(fn ($record) => !empty($record->details['pdf_document']))
+                    ->visible(fn ($record) => !empty($record->details['word_document']))
                     ->url(fn ($record) => route('employees.download', ['id' => $record->id]))
                     ->openUrlInNewTab(),
                 ActionGroup::make([

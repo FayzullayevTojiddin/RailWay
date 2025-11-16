@@ -12,6 +12,8 @@ class Report extends Model
         'type',
         'planned_value',
         'actual_value',
+        'expense',
+        'income',
         'date',
         'notes'
     ];

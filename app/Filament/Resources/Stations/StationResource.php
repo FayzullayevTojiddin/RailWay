@@ -10,7 +10,6 @@ use App\Filament\Resources\Stations\Schemas\StationForm;
 use App\Filament\Resources\Stations\Tables\StationsTable;
 use App\Filament\Resources\Stations\RelationManagers\EmployeesRelationManager;
 use App\Filament\Resources\Stations\RelationManagers\BranchRailwaysRelationManager;
-use App\Filament\Resources\Stations\RelationManagers\MainRailwaysRelationManager;
 use App\Models\Station;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -71,7 +70,6 @@ class StationResource extends Resource
         return [
             EmployeesRelationManager::class,
             BranchRailwaysRelationManager::class,
-            MainRailwaysRelationManager::class,
             CadastresRelationManager::class,
             ReportsRelationManager::class
         ];
@@ -103,7 +101,6 @@ class StationResource extends Resource
             'Turi' => $record->type,
             'Xodimlar' => $record->employees()->count() . ' ta',
             'Shaxobcha yo\'llar' => $record->branchRailways()->count() . ' ta',
-            'Temir yo\'llar' => $record->mainRailways()->count() . ' ta',
         ];
     }
 }

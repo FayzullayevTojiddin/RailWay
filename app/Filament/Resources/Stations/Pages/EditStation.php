@@ -30,7 +30,7 @@ class EditStation extends EditRecord
     public function getFooterWidgets(): array
     {
         return [
-            ReportsWidget::class,
+            // ReportsWidget::class,
         ];
     }
 }

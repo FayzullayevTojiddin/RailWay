@@ -36,7 +36,7 @@ return [
     ],
 
     'uzbekvoice' => [
-        'api_key' => env('UZBEKVOICE_API_KEY', 'fd384069-9ef1-4f48-8dbe-1e893086572a:32a68e0e-e919-47d1-b056-80dfe2f730e9'),
+        'api_key' => env('UZBEKVOICE_API_KEY', '08170e6e-8609-4d84-8950-caf2a0b27e00:1dc3262d-94e4-4da4-853c-548cbe229281'),
         'base_url' => env('UZBEKVOICE_BASE_URL', 'https://uzbekvoice.ai'),
         'stt_endpoint' => '/api/v1/stt',
         'tts_endpoint' => '/api/v1/tts',

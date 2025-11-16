@@ -26,13 +26,14 @@ class StationForm
                                 ->maxLength(255)
                                 ->columnSpan(2),
 
-                            Select::make('type')
+                           Select::make('type')
                                 ->label('Ma\'lumot turi')
                                 ->options([
-                                    'station' => 'Stansiya',
-                                    'enterprise' => 'Korxona',
+                                    'big_station'   => 'Katta stansiya',
+                                    'small_station' => 'Kichik stansiya',
+                                    'bridge'        => 'Ko\'prik',
+                                    'enterprise'    => 'Korxona',
                                 ])
-                                ->searchable()
                                 ->required(),
                         ]),
 
@@ -61,28 +62,38 @@ class StationForm
                                 ->required()
                                 ->placeholder('69.279737'),
                         ]),
-                    
+
                     Grid::make(2)
                         ->schema([
                             TextInput::make('coordinates.x')
                                 ->label('X - Gorizontal pozitsiya (%)')
                                 ->numeric()
-                                ->step(0.1)
+                                ->step(0.01) // <-- o'zgartirildi: 0.01 bilan 0,1 yoki 2 onlik ruxsat etiladi
                                 ->minValue(0)
                                 ->maxValue(100)
                                 ->suffix('%')
                                 ->helperText('Xaritada chapdan o\'ngga (0-100)')
-                                ->placeholder('50'),
+                                ->placeholder('50')
+                                ->rules([
+                                    'nullable',
+                                    'regex:/^\d+(\.\d{1,2})?$/' // server-side: 0, 1 yoki 2 onlikni ruxsat etadi
+                                ])
+                                ->dehydrateStateUsing(fn($state) => $state === null ? null : round((float)$state, 2)),
 
                             TextInput::make('coordinates.y')
                                 ->label('Y - Vertikal pozitsiya (%)')
                                 ->numeric()
-                                ->step(0.1)
+                                ->step(0.01) // <-- shu yer ham 0.01 qilish kerak
                                 ->minValue(0)
                                 ->maxValue(100)
                                 ->suffix('%')
                                 ->helperText('Xaritada tepadan pastga (0-100)')
-                                ->placeholder('50'),
+                                ->placeholder('50')
+                                ->rules([
+                                    'nullable',
+                                    'regex:/^\d+(\.\d{1,2})?$/'
+                                ])
+                                ->dehydrateStateUsing(fn($state) => $state === null ? null : round((float)$state, 2)),
                         ]),
                 ])
                 ->footerActions([
@@ -113,6 +124,32 @@ class StationForm
                 ])
                 ->collapsible()
                 ->collapsed(false),
+
+            // Yangi bo'lim: faqat small_station yoki big_station turlari uchun ko'rinadi.
+            Section::make('Texnik ma\'lumotlar')
+                ->schema([
+                    TextInput::make('details.station_class')
+                        ->label("Stantsiyaning classi")
+                        ->numeric()
+                        ->step(1)
+                        ->rules(['nullable', 'integer'])
+                        ->columnSpanFull(),
+
+                    TextInput::make('details.receiving_tracks')
+                        ->label("Qabul qilib jo'natuvchi yo'llar")
+                        ->numeric()
+                        ->step(1)
+                        ->rules(['nullable', 'integer'])
+                        ->columnSpanFull(),
+
+                    TextInput::make('details.traction_tracks')
+                        ->label("Traksion yo'llar")
+                        ->numeric()
+                        ->step(1)
+                        ->rules(['nullable', 'integer'])
+                        ->columnSpanFull(),
+                ])
+                ->visible(fn ($get) => in_array($get('type'), ['small_station', 'big_station'])),
 
             Section::make('Kadastr rasmi')
                 ->description('Stansiya kadastr pasporti yoki xaritasining rasmi (1 ta rasm)')
@@ -166,6 +203,20 @@ class StationForm
                 ])
                 ->collapsible()
                 ->collapsed(false),
+
+            Section::make('Qo‘shimcha atributlar')
+                ->columnSpanFull()
+                ->schema([
+                    \Filament\Forms\Components\KeyValue::make('details.additional')
+                        ->label('Atributlar')
+                        ->addButtonLabel('Atribut qo‘shish')
+                        ->keyLabel('Nom')
+                        ->valueLabel('Qiymat')
+                        ->reorderable()
+                        ->columnSpanFull(),
+                ])
+                ->collapsible()
+                ->collapsed()
         ]);
     }
 }

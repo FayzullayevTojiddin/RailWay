@@ -15,12 +15,13 @@ return new class extends Migration
             $table->id();
             $table->foreignId('station_id')->constrained()->cascadeOnDelete();
             $table->string('type');
-            $table->integer('planned_value');
-            $table->integer('actual_value');
+            $table->integer('planned_value')->nullable();
+            $table->integer('actual_value')->nullable();
+            $table->integer('income')->nullable();
+            $table->integer('expense')->nullable();
             $table->date('date');
             $table->text('notes')->nullable();
             $table->timestamps();
-            $table->unique(['station_id', 'type', 'date']);
         });
     }
 

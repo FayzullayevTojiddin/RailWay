@@ -40,11 +40,6 @@ class Station extends Model
         return $this->hasMany(BranchRailway::class);
     }
 
-    public function mainRailways(): HasMany
-    {
-        return $this->hasMany(MainRailway::class);
-    }
-
     public function reports(): HasMany
     {
         return $this->hasMany(Report::class);

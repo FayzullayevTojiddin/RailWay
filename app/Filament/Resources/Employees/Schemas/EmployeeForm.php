@@ -100,17 +100,15 @@ class EmployeeForm
 
                 Section::make('Hujjatlar')
                     ->schema([
-                        FileUpload::make('details.pdf_document')
-                            ->label('PDF hujjat')
-                            ->acceptedFileTypes(['application/pdf'])
+                        FileUpload::make('details.word_document')
+                            ->label('Word hujjat')
+                            ->acceptedFileTypes(['doc', 'docx'])
                             ->directory('employee-documents')
-                            ->maxSize(10240)
                             ->downloadable()
-                            ->openable()
+                            ->openable(false)
                             ->previewable(false)
                             ->columnSpanFull(),
                     ]),
-
 
                 Section::make('Mehnat faoliyati')
                     ->schema([

@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Station;
 use App\Models\Employee;
+use App\Models\Report;
+use OpenAI\Laravel\Facades\OpenAI;
 
 class VoiceController extends Controller
 {
@@ -24,606 +26,380 @@ class VoiceController extends Controller
     {
         try {
             $audioFile = $request->file('audio');
-            
-            if (!$audioFile) {
-                return response()->json([
-                    'success' => false,
-                    'error' => 'Audio topilmadi'
-                ], 400);
-            }
-            
-            // Audio faylni hash qilib keshlash uchun
             $audioHash = md5_file($audioFile->getRealPath());
             $transcribedText = $this->getCachedTranscription($audioHash, $audioFile);
-            
-            $response = $this->processIntent($transcribedText);
-            
-            $taskId = $this->getCachedTtsAudio($response);
+            $intent = $this->detectIntent($transcribedText);
+            $responseText = $this->getResponse($intent);
+
+            $audioResult = $this->textToSpeech($responseText);
             
             return response()->json([
                 'success' => true,
                 'transcribed_text' => $transcribedText,
-                'response' => $response,
-                'task_id' => $taskId,
-                'timestamp' => now()->toIso8601String(),
-                'from_cache' => true
+                'intent' => $intent,
+                'response_text' => $responseText,
+                'audio' => $audioResult
             ]);
             
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'error' => $e->getMessage()
-            ], 500);
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
     }
-    
-    /**
-     * Audio faylni matnга aylantirish (kesh bilan)
-     */
-    private function getCachedTranscription($audioHash, $audioFile)
+
+    protected function textToSpeech($text)
     {
-        $cacheKey = 'stt_' . $audioHash;
-        
-        // Keshdan tekshirish
-        $cached = Cache::get($cacheKey);
-        if ($cached) {
-            \Log::info("STT keshdan olindi: {$audioHash}");
-            return $cached;
-        }
-        
-        // Keshda yo'q bo'lsa, API orqali olish
-        $transcription = $this->speechToText($audioFile);
-        
-        // Keshga saqlash (30 kun)
-        Cache::put($cacheKey, $transcription, 60 * 24 * 30);
-        
-        \Log::info("STT APIdan olindi va keshlandi: {$audioHash}");
-        
-        return $transcription;
-    }
-    
-    /**
-     * Matnni ovozга aylantirish (kesh bilan)
-     */
-    private function getCachedTtsAudio($text)
-    {
-        $textHash = md5(trim($text));
-        $cacheKey = 'tts_' . $textHash;
-        
-        // Keshdan tekshirish
-        $cached = Cache::get($cacheKey);
-        if ($cached) {
-            \Log::info("TTS keshdan olindi: {$textHash}");
-            
-            // Agar audio URL mavjud bo'lsa
-            if (isset($cached['audio_url'])) {
-                return $cacheKey;
-            }
-            
-            // Agar lokal fayl mavjud bo'lsa
-            if (isset($cached['local_path']) && Storage::exists($cached['local_path'])) {
-                return $cacheKey;
-            }
-        }
-        
-        // Keshda yo'q bo'lsa, API orqali yaratish
-        $taskId = $this->createTtsTask($text, $textHash);
-        
-        \Log::info("TTS APIdan olindi va keshlandi: {$textHash}");
-        
-        return $taskId;
-    }
-    
-    private function speechToText($audioFile)
-    {
+        $endpoint = $this->baseUrl . '/api/v1/tts';
+        $payload = [
+            'text' => $text,
+            'model' => '',
+            'blocking' => 'true',
+        ];
         try {
-            $audioContent = file_get_contents($audioFile->getRealPath());
-            
-            $response = Http::timeout(120)
-                ->connectTimeout(30)
-                ->withHeaders(['Authorization' => $this->apiKey])
-                ->attach('file', $audioContent, $audioFile->getClientOriginalName())
-                ->post($this->baseUrl . '/api/v1/stt', [
-                    'return_offsets' => false,
-                    'run_diarization' => false,
-                    'language' => 'uz',
-                    'blocking' => 'true'
-                ]);
-            
+            $response = Http::withHeaders([
+                'Authorization' => $this->apiKey,
+                'Content-Type' => 'application/json',
+            ])->post($endpoint, $payload);
+
             if (!$response->successful()) {
-                throw new \Exception('STT API xatosi: ' . $response->status() . ' - ' . $response->body());
+                \Log::error('TTS failed', [
+                    'status' => $response->status(),
+                    'body' => $response->body()
+                ]);
+                return null;
             }
-            
+
             $data = $response->json();
-            
-            if (isset($data['result']['text'])) {
-                return trim($data['result']['text']);
+            $remoteUrl = $data['result']['url'] ?? null;
+
+            if (!$remoteUrl) {
+                \Log::error('TTS response missing URL');
+                return null;
             }
-            
-            if (isset($data['text'])) {
-                return trim($data['text']);
-            }
-            
-            if (isset($data['id'])) {
-                return $this->waitForSttResult($data['id']);
-            }
-            
-            throw new \Exception('STT natijasida matn topilmadi: ' . json_encode($data));
-            
-        } catch (\Exception $e) {
-            throw $e;
-        }
-    }
-    
-    private function waitForSttResult($taskId, $maxAttempts = 60)
-    {
-        for ($i = 0; $i < $maxAttempts; $i++) {
-            sleep(1);
             
             try {
-                $response = Http::timeout(30)
-                    ->withHeaders(['Authorization' => $this->apiKey])
-                    ->get($this->baseUrl . '/api/v1/tasks', ['id' => $taskId]);
-                
-                if (!$response->successful()) {
-                    continue;
-                }
-                
-                $data = $response->json();
-                $state = $data['state'] ?? $data['status'] ?? null;
-                
-                if ($state === 'SUCCESS' || $state === 'COMPLETED') {
-                    $text = $data['result']['text'] ?? $data['text'] ?? '';
-                    
-                    if (!empty($text)) {
-                        return trim($text);
-                    }
-                }
-                
-                if ($state === 'FAILED' || $state === 'ERROR') {
-                    throw new \Exception('STT task failed: ' . ($data['error'] ?? 'Unknown'));
-                }
-                
+                $fileData = Http::get($remoteUrl)->body();
+                $fileName = 'tts_' . md5($text . microtime(true)) . '.wav';
+
+                Storage::put("public/tts/{$fileName}", $fileData);
+
+                return [
+                    'remote_url' => $remoteUrl,
+                    'local_url' => Storage::url("tts/{$fileName}")
+                ];
             } catch (\Exception $e) {
-                // Continue polling
+                return [
+                    'remote_url' => $remoteUrl,
+                    'local_url' => null
+                ];
             }
         }
-        
-        throw new \Exception('STT timeout - ' . $maxAttempts . ' soniya kutildi');
-    }
-    
-    private function processIntent($text)
-    {
-        $originalText = $text;
-        $text = strtolower(trim($text));
-        
-        if (empty($text)) {
-            return 'Tushunmadim. Iltimos qaytadan gapiring.';
-        }
-        
-        // Salom
-        if (strpos($text, 'salom') !== false || strpos($text, 'hello') !== false) {
-            return 'Assalomu alaykum! Men sizga stantsiyalar va xodimlar haqida ma\'lumot beraman.';
-        }
-        
-        // Stantsiya intent
-        $hasStationWord = strpos($text, 'stantsiya') !== false || 
-                         strpos($text, 'stansiya') !== false ||
-                         strpos($text, 'stansiyasi') !== false;
-        
-        if ($hasStationWord) {
-            return $this->handleStationQuery($text);
-        }
-        
-        // Xodim intent
-        $hasEmployeeWord = strpos($text, 'xodim') !== false || 
-                          strpos($text, 'hodim') !== false || 
-                          strpos($text, 'ishchi') !== false || 
-                          strpos($text, 'employee') !== false;
-        
-        if ($hasEmployeeWord) {
-            return $this->handleEmployeeQuery($text);
-        }
-        
-        // Stantsiya nomini to'g'ridan-to'g'ri qidirish
-        $station = $this->findStationInText($text);
-        if ($station) {
-            return $this->getStationInfo($station);
-        }
-        
-        // Xodim nomini to'g'ridan-to'g'ri qidirish
-        $employee = $this->findEmployeeInText($text);
-        if ($employee) {
-            return $this->getEmployeeInfo($employee);
-        }
-        
-        return 'Tushunmadim. Stantsiya yoki xodim nomini aniq ayting.';
-    }
-    
-    private function handleStationQuery($text)
-    {
-        $station = $this->findStationInText($text);
-        
-        if (!$station) {
-            $count = Station::count();
-            return "Jami {$count} ta stantsiya mavjud. Qaysi stantsiya haqida ma'lumot kerak?";
-        }
-        
-        return $this->getStationInfo($station);
-    }
-    
-    private function handleEmployeeQuery($text)
-    {
-        $employee = $this->findEmployeeInText($text);
-        
-        if (!$employee) {
-            $count = Employee::count();
-            return "Jami {$count} nafar xodim ishlaydi. Qaysi xodim haqida ma'lumot kerak?";
-        }
-        
-        return $this->getEmployeeInfo($employee);
-    }
-    
-    private function findStationInText($text)
-    {
-        $stations = Station::all();
-        
-        // 1. To'liq nom bilan
-        foreach ($stations as $station) {
-            $stationName = strtolower($station->title);
-            if (stripos($text, $stationName) !== false) {
-                return $station;
-            }
-        }
-        
-        // 2. Asosiy so'z bilan (3+ harf)
-        foreach ($stations as $station) {
-            $stationName = strtolower($station->title);
-            $words = explode(' ', $stationName);
-            
-            foreach ($words as $word) {
-                if (strlen($word) > 3 && stripos($text, $word) !== false) {
-                    return $station;
-                }
-            }
-        }
-        
-        // 3. O'xshash nom (fuzzy) - harflarni solishtirish
-        foreach ($stations as $station) {
-            $stationName = strtolower($station->title);
-            $stationWords = explode(' ', $stationName);
-            $textWords = explode(' ', $text);
-            
-            foreach ($stationWords as $stationWord) {
-                if (strlen($stationWord) < 4) continue;
-                
-                foreach ($textWords as $textWord) {
-                    if (strlen($textWord) < 3) continue;
-                    
-                    // O'xshashlik (70%+)
-                    similar_text($stationWord, $textWord, $percent);
-                    if ($percent >= 70) {
-                        return $station;
-                    }
-                }
-            }
-        }
-        
-        return null;
-    }
-    
-    private function findEmployeeInText($text)
-    {
-        $employees = Employee::all();
-        
-        foreach ($employees as $employee) {
-            $fullName = strtolower($employee->first_name . ' ' . $employee->last_name);
-            $firstName = strtolower($employee->first_name);
-            $lastName = strtolower($employee->last_name);
-            
-            if (stripos($text, $fullName) !== false || 
-                stripos($text, $firstName) !== false || 
-                stripos($text, $lastName) !== false) {
-                return $employee;
-            }
-        }
-        
-        return null;
-    }
-    
-    private function getStationInfo($station)
-    {
-        // Asosiy ma'lumot
-        $info = "{$station->title} stantsiyasi haqida ma'lumot. ";
-        
-        // Tavsif
-        if ($station->description) {
-            $info .= $station->description . ". ";
-        }
-        
-        // Xodimlar
-        $employeeCount = $station->employees()->count();
-        if ($employeeCount > 0) {
-            $info .= "Ushbu stantsiyada {$employeeCount} nafar xodim ishlaydi. ";
-            
-            $femaleCount = $station->employees()->where('sex', 'female')->count();
-            $maleCount = $station->employees()->where('sex', 'male')->count();
-            
-            if ($femaleCount > 0 && $maleCount > 0) {
-                $info .= "Ulardan {$femaleCount} nafari ayol, {$maleCount} nafari erkak xodimlar. ";
-            } elseif ($femaleCount > 0) {
-                $info .= "Ularning barchasi ayol xodimlar. ";
-            } elseif ($maleCount > 0) {
-                $info .= "Ularning barchasi erkak xodimlar. ";
-            }
-        } else {
-            $info .= "Hozircha xodimlar ma'lumoti kiritilmagan. ";
-        }
-        
-        // Yo'llar
-        $branchCount = $station->branchRailways()->count();
-        $mainCount = $station->mainRailways()->count();
-        $totalTracks = $branchCount + $mainCount;
-        
-        if ($totalTracks > 0) {
-            $info .= "Mavjud yo'llarning soni {$totalTracks} ta. ";
-            
-            if ($branchCount > 0 && $mainCount > 0) {
-                $info .= "Ulardan {$branchCount} tasi shaxobcha yo'llari, {$mainCount} tasi esa asosiy temir yo'ldir. ";
-            } elseif ($branchCount > 0) {
-                $info .= "Ularning barchasi shaxobcha yo'llari. ";
-            } elseif ($mainCount > 0) {
-                $info .= "Ularning barchasi asosiy temir yo'llar. ";
-            }
-        } else {
-            $info .= "Yo'llar ma'lumoti hali kiritilmagan. ";
-        }
-        
-        // Yer maydoni (Cadastre)
-        $cadastres = $station->cadastres;
-        if ($cadastres->count() > 0) {
-            $totalArea = $cadastres->sum('area');
-            
-            if ($totalArea > 0) {
-                if ($totalArea >= 10000) {
-                    $hectares = round($totalArea / 10000, 2);
-                    $info .= "Umumiy yer maydoni {$hectares} gektar. ";
-                } else {
-                    $info .= "Umumiy yer maydoni {$totalArea} kvadrat metr. ";
-                }
-            }
-        }
-        
-        return $info;
-    }
-    
-    private function getEmployeeInfo($employee)
-    {
-        $info = "{$employee->full_name} haqida ma'lumot. ";
-        
-        if ($employee->position) {
-            $info .= "Lavozimi: {$employee->position}. ";
-        }
-        
-        if ($employee->station) {
-            $info .= "{$employee->station->title} stantsiyasida ishlaydi. ";
-        }
-        
-        $sex = $employee->sex === 'female' ? 'Ayol' : 'Erkak';
-        $info .= "Jinsi: {$sex}. ";
-        
-        if ($employee->birth_date) {
-            $age = now()->diffInYears($employee->birth_date);
-            $info .= "Yoshi: {$age}. ";
-        }
-        
-        return $info;
-    }
-    
-    private function createTtsTask($text, $textHash)
-    {
-        try {
-            $response = Http::timeout(120)
-                ->connectTimeout(30)
-                ->withHeaders([
-                    'Authorization' => $this->apiKey,
-                    'Content-Type' => 'application/json'
-                ])
-                ->post($this->baseUrl . '/api/v1/tts', [
-                    'text' => $text,
-                    'model' => 'davron-neutral',
-                    'blocking' => 'true'
-                ]);
-            
-            if (!$response->successful()) {
-                throw new \Exception('TTS API xatosi: ' . $response->status());
-            }
-            
-            $data = $response->json();
-            $taskId = $data['id'] ?? null;
-            
-            if (!$taskId) {
-                throw new \Exception('TTS task ID topilmadi');
-            }
-            
-            $cacheKey = 'tts_' . $textHash;
-            
-            if (isset($data['result']['url']) && $data['status'] === 'SUCCESS') {
-                // Audio URL ni keshga saqlash
-                $audioUrl = $data['result']['url'];
-                
-                // Audio faylni yuklab olish va lokal saqlash
-                $localPath = $this->downloadAndStoreAudio($audioUrl, $textHash);
-                
-                Cache::put($cacheKey, [
-                    'status' => 'SUCCESS',
-                    'audio_url' => $audioUrl,
-                    'local_path' => $localPath,
-                    'original_task_id' => $taskId,
-                    'created_at' => now()->toIso8601String()
-                ], 60 * 24 * 30); // 30 kun
-            } else {
-                Cache::put($cacheKey, [
-                    'status' => 'PENDING',
-                    'original_task_id' => $taskId,
-                    'created_at' => now()->toIso8601String()
-                ], 600);
-                
-                dispatch(function() use ($taskId, $cacheKey, $textHash) {
-                    $this->pollTtsResult($taskId, $cacheKey, $textHash);
-                })->afterResponse();
-            }
-            
-            return $cacheKey;
-            
-        } catch (\Exception $e) {
-            throw $e;
-        }
-    }
-    
-    /**
-     * Audio faylni yuklab olish va lokal saqlash
-     */
-    private function downloadAndStoreAudio($url, $hash)
-    {
-        try {
-            $audioContent = Http::timeout(60)->get($url)->body();
-            
-            $filename = 'tts_audio/' . $hash . '.mp3';
-            Storage::put($filename, $audioContent);
-            
-            return $filename;
-        } catch (\Exception $e) {
-            \Log::error("Audio yuklab olishda xatolik: " . $e->getMessage());
+        catch (\Exception $e) {
+            \Log::error('TTS request exception', ['err' => $e->getMessage()]);
             return null;
         }
     }
     
-    private function pollTtsResult($taskId, $cacheKey, $textHash)
+    private function getCachedTranscription($audioHash, $audioFile)
     {
-        $maxAttempts = 60;
+        $cacheKey = 'stt_' . $audioHash;
+        return Cache::remember($cacheKey, 60 * 24 * 30, function() use ($audioFile) {
+            return $this->speechToText($audioFile);
+        });
+    }
+    
+    private function speechToText($audioFile)
+    {
+        $audioContent = file_get_contents($audioFile->getRealPath());
         
-        for ($i = 0; $i < $maxAttempts; $i++) {
-            sleep(1);
+        $response = Http::timeout(60)
+            ->withHeaders(['Authorization' => $this->apiKey])
+            ->attach('file', $audioContent, $audioFile->getClientOriginalName())
+            ->post($this->baseUrl . '/api/v1/stt', [
+                'language' => 'uz',
+                'model' => 'davron-neutral',
+                'blocking' => 'true'
+            ]);
+        
+        if (!$response->successful()) {
+            throw new \Exception('STT API xatosi: ' . $response->status());
+        }
+        
+        $data = $response->json();
+        return trim($data['result']['text'] ?? $data['text'] ?? '');
+    }
+    
+    private function detectIntent(string $text): array
+    {
+        if (empty(trim($text))) {
+            return ['type' => 'unknown', 'key' => null, 'id' => null];
+        }
+
+        $stations = Station::select('id', 'title')->get();
+        $employees = Employee::select('id', 'full_name')->get();
+
+        $stationList = $stations->map(fn($s) => "{$s->id}:{$s->title}")->implode(', ');
+        $employeeList = $employees->map(fn($e) => "{$e->id}:{$e->full_name}")->implode(', ');
+
+        $prompt = "Matn: \"{$text}\"\n\n";
+        $prompt .= "Mavjud stantsiyalar (id:nom): {$stationList}\n";
+        $prompt .= "Mavjud xodimlar (id:nom): {$employeeList}\n\n";
+        $prompt .= "JSON formatda javob ber:\n";
+        $prompt .= "{\n";
+        $prompt .= '  "type": "station" | "employee" | "unknown",'."\n";
+        $prompt .= '  "id": topilgan_id'."\n";
+        $prompt .= "}\n\n";
+        $prompt .= "Eslatma: Stantsiya turlari (big_station, small_station, bridge, enterprise) barchasi 'station' type hisoblanadi.\n";
+        $prompt .= "Faqat JSON qayt.";
+
+        try {
+            $response = OpenAI::chat()->create([
+                'model' => 'gpt-4o-mini',
+                'messages' => [
+                    ['role' => 'system', 'content' => 'Faqat JSON formatida javob ber.'],
+                    ['role' => 'user', 'content' => $prompt]
+                ],
+                'temperature' => 0.3,
+            ]);
+
+            $content = trim($response->choices[0]->message->content ?? '{}');
+            $content = preg_replace('/```json|```/i', '', $content);
+            $content = trim($content);
             
+            $parsed = json_decode($content, true);
+            
+            if (!$parsed || !isset($parsed['type'])) {
+                throw new \Exception('Invalid JSON');
+            }
+
+            return [
+                'type' => $parsed['type'],
+                'id' => $parsed['id'] ?? null
+            ];
+
+        } catch (\Exception $e) {
+            return ['type' => 'unknown', 'id' => null];
+        }
+    }
+
+    private function getResponse(array $intent): string
+    {
+        $type = $intent['type'];
+        $id = $intent['id'];
+
+        if ($type === 'station' && $id) {
+            return $this->getStationInfo($id);
+        }
+
+        if ($type === 'employee' && $id) {
+            return $this->getEmployeeInfo($id);
+        }
+
+        return 'Tushunmadim. Iltimos stantsiya yoki xodim nomini aniq ayting.';
+    }
+    
+    private function getStationInfo($stationId): string
+    {
+        $station = Station::with('employees', 'reports')->find($stationId);
+
+        if (!$station) {
+            return 'Stantsiya topilmadi.';
+        }
+
+        // details JSON bo'lishi mumkin — qulay olish uchun data_get ishlatamiz
+        $details = is_array($station->details) ? $station->details : (is_null($station->details) ? [] : (array) $station->details);
+
+        $title = $station->title ?? 'Nom berilmagan';
+        $infoParts = [];
+
+        // 1) Sarlavha
+        $infoParts[] = "{$title} stansiyasi";
+
+        // 2) Klass
+        if (!empty($details['station_class'])) {
+            $infoParts[] = "{$details['station_class']}-klass stansiyasi bo'lib,";
+        }
+
+        // 3) Yo'llar haqida
+        $trackParts = [];
+        if (isset($details['receiving_tracks']) && $details['receiving_tracks'] !== '') {
+            $trackParts[] = "{$details['receiving_tracks']} ta qabul qilib jo'natuvchi yo'li";
+        }
+        if (isset($details['traction_tracks']) && $details['traction_tracks'] !== '') {
+            $trackParts[] = "{$details['traction_tracks']} ta traksion yo'li";
+        }
+        if (!empty($trackParts)) {
+            $infoParts[] = implode(', ', $trackParts) . " mavjud.";
+        } else {
+            $infoParts[] = "Yo'llar haqida ma'lumot mavjud emas.";
+        }
+
+        // 4) Xodimlar soni va jinslar bo'yicha taqsimot
+        // employees relation bilan preloaded bo'lsa ishlatamiz, aks holda query orqali olish
+        try {
+            $totalEmployees = $station->employees ? $station->employees->count() : $station->employees()->count();
+        } catch (\Throwable $e) {
+            $totalEmployees = $station->employees()->count();
+        }
+
+        if ($totalEmployees > 0) {
+            // jinslar bo'yicha sanash — agar relation preloaded bo'lsa collectiondan oling, aks holda query
+            if ($station->relationLoaded('employees')) {
+                $maleCount = $station->employees->where('sex', 'male')->count();
+                $femaleCount = $station->employees->where('sex', 'female')->count();
+                $unknownSex = $totalEmployees - ($maleCount + $femaleCount);
+            } else {
+                $maleCount = $station->employees()->where('sex', 'male')->count();
+                $femaleCount = $station->employees()->where('sex', 'female')->count();
+                $unknownSex = $totalEmployees - ($maleCount + $femaleCount);
+            }
+
+            // Tuzilishi: "Stansiyada jami X ta xodim ishlaydi. Ularning Y tasi erkak, Z tasi ayol."
+            $empText = "Stansiyada jami {$totalEmployees} ta xodim ishlaydi.";
+            if ($maleCount > 0 || $femaleCount > 0) {
+                $sexParts = [];
+                if ($maleCount > 0) $sexParts[] = "{$maleCount} tasi erkak";
+                if ($femaleCount > 0) $sexParts[] = "{$femaleCount} tasi ayol";
+                if ($unknownSex > 0) $sexParts[] = "{$unknownSex} tasi jins ma'lum emas";
+                $empText .= " Ularning " . implode(', ', $sexParts) . ".";
+            } else {
+                // hech qanday sex qiymati topilmagan
+                $empText .= " Xodimlarning jinslari haqida ma'lumot mavjud emas.";
+            }
+
+            $infoParts[] = $empText;
+        } else {
+            $infoParts[] = "Stansiyada hozircha xodimlar ro'yxati bo'sh.";
+        }
+
+        // 5) Joriy oy uchun rejalashtirilgan hisobotlar (yuk tushurilishi, yuk ortilishi, pul tushumi)
+        $now = \Carbon\Carbon::now();
+        $year = $now->year;
+        $month = $now->month;
+
+        // reports relationship mavjud bo'lsa collectiondan filtrlash yoki query ishlatish
+        $reportsQuery = null;
+        if ($station->relationLoaded('reports')) {
+            $reports = collect($station->reports)->filter(function ($r) use ($year, $month) {
+                // r->date bo'lishi shart; mos kelmasa filtrdan tashla
+                if (empty($r->date)) return false;
+                try {
+                    $d = \Carbon\Carbon::parse($r->date);
+                } catch (\Throwable $e) {
+                    return false;
+                }
+                return $d->year === $year && $d->month === $month;
+            });
+        } else {
+            // relationship query — 'date' ustuni mavjud deb taxmin qilamiz
+            $reports = $station->reports()
+                ->whereYear('date', $year)
+                ->whereMonth('date', $month)
+                ->get();
+        }
+
+        // Sum values (planned_value may be numeric or string)
+        $yukOrtish = (float) $reports->where('type', 'yuk_ortilishi')->sum(function ($r) {
+            return (float) data_get($r, 'planned_value', 0);
+        });
+        $yukTushirish = (float) $reports->where('type', 'yuk_tushurilishi')->sum(function ($r) {
+            return (float) data_get($r, 'planned_value', 0);
+        });
+        $pulTushumi = (float) $reports->where('type', 'pul_tushumi')->sum(function ($r) {
+            return (float) data_get($r, 'planned_value', 0);
+        });
+
+        // Agar hech qanday reja topilmasa
+        if ($yukOrtish > 0 || $yukTushirish > 0 || $pulTushumi > 0) {
+            $reportParts = [];
+            if ($yukTushirish > 0) $reportParts[] = "yuk tushurilishi rejasi {$yukTushirish} vagon";
+            if ($yukOrtish > 0) $reportParts[] = "oylik yuk ortilishi {$yukOrtish} vagon";
+            if ($pulTushumi > 0) $reportParts[] = "oylik pul tushumi {$pulTushumi} so'm";
+            $infoParts[] = "Ushbu oy uchun rejalar: " . implode(', ', $reportParts) . ".";
+        } else {
+            $infoParts[] = "Ushbu oy uchun rejalashtirilgan yuk/pul ma'lumotlari mavjud emas.";
+        }
+
+        // Birlashtirib qaytarish
+        $info = implode(' ', array_filter($infoParts));
+        return trim($info);
+    }      
+    
+    private function getEmployeeInfo($employeeId): string
+    {
+        $employee = Employee::with('station')->find($employeeId);
+
+        if (!$employee) {
+            return 'Xodim topilmadi.';
+        }
+
+        // Mapping
+        $documentTypeMap = [
+            'main'       => "Asosiy ish",
+            'additional' => "Qo'shimcha ish",
+        ];
+
+        $categoryMap = [
+            'higher'            => "Oliy",
+            'secondary_special' => "O'rta maxsus",
+            'secondary'         => "O'rta",
+        ];
+
+        $parts = [];
+
+        //------------------------------
+        // 1) Xodim haqida
+        //------------------------------
+        $parts[] = "{$employee->full_name} haqida ma'lumot.";
+
+        //------------------------------
+        // 2) Ishga kirgan sanasi → "2025-yil Noyabr oyidan beri"
+        //------------------------------
+        if ($employee->joined_at) {
+            $joined = $employee->joined_at instanceof \Carbon\Carbon
+                ? $employee->joined_at
+                : \Carbon\Carbon::parse($employee->joined_at);
+
+            $year  = $joined->format('Y');
+            $month = $joined->locale('uz')->monthName; // Masalan: noyabr, dekabr, fevral
+
+            $workPeriodText = "{$year}-yilning {$month} oyidan beri";
+
+            // Stansiya + role
+            $station = $employee->station->title ?? "stansiyada";
+
+            $role = $employee->role ?? "ishchi";
+
+            $parts[] = "U {$workPeriodText} {$station} stansiyasida {$role} bo'lib ishlaydi.";
+        }
+
+        //------------------------------
+        // 3) Yoshi
+        //------------------------------
+        if ($employee->birth_date) {
             try {
-                $response = Http::timeout(30)
-                    ->withHeaders(['Authorization' => $this->apiKey])
-                    ->get($this->baseUrl . '/api/v1/tasks', ['id' => $taskId]);
-                
-                if (!$response->successful()) {
-                    continue;
-                }
-                
-                $data = $response->json();
-                $status = $data['status'] ?? $data['state'] ?? null;
-                
-                if ($status === 'SUCCESS' || $status === 'COMPLETED') {
-                    $audioUrl = $data['result']['url'] ?? null;
-                    
-                    if ($audioUrl) {
-                        // Audio faylni yuklab olish va lokal saqlash
-                        $localPath = $this->downloadAndStoreAudio($audioUrl, $textHash);
-                        
-                        Cache::put($cacheKey, [
-                            'status' => 'SUCCESS',
-                            'audio_url' => $audioUrl,
-                            'local_path' => $localPath,
-                            'updated_at' => now()->toIso8601String()
-                        ], 60 * 24 * 30); // 30 kun
-                        
-                        return;
-                    }
-                }
-                
-                if ($status === 'FAILED' || $status === 'ERROR') {
-                    Cache::put($cacheKey, [
-                        'status' => 'FAILED',
-                        'error' => $data['error'] ?? 'Unknown'
-                    ], 600);
-                    
-                    return;
-                }
-                
-            } catch (\Exception $e) {
-                // Continue polling
+                $age = $employee->birth_date->age;
+                $parts[] = "Yoshi {$age} daa.";
+            } catch (\Throwable $e) {
+                $parts[] = "Yoshi ko‘rsatilmagan.";
             }
         }
-        
-        Cache::put($cacheKey, ['status' => 'TIMEOUT'], 600);
-    }
-    
-    public function getTtsStatus($taskId)
-    {
-        $status = Cache::get($taskId);
-        
-        if (!$status) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Task topilmadi'
-            ], 404);
+
+        //------------------------------
+        // 4) Ma'lumoti (category)
+        //------------------------------
+        if ($employee->category) {
+            $cat = $categoryMap[$employee->category] ?? $employee->category;
+            $parts[] = "Ma'lumoti {$cat}.";
         }
-        
-        // Agar lokal fayl mavjud bo'lsa, uni yuborish
-        if (isset($status['local_path']) && Storage::exists($status['local_path'])) {
-            $hash = basename($status['local_path'], '.mp3');
-            return response()->json([
-                'success' => true,
-                'task_id' => $taskId,
-                'status' => $status['status'] ?? 'PENDING',
-                'audio_url' => url('/api/tts/audio/' . $hash),
-                'from_cache' => true,
-                'created_at' => $status['created_at'] ?? null,
-                'updated_at' => $status['updated_at'] ?? null
-            ]);
+
+        //------------------------------
+        // 5) Ish turi (document_type)
+        //------------------------------
+        if ($employee->document_type) {
+            $doc = $documentTypeMap[$employee->document_type] ?? $employee->document_type;
+            $parts[] = "Ish turi {$doc}.";
         }
-        
-        return response()->json([
-            'success' => true,
-            'task_id' => $taskId,
-            'status' => $status['status'] ?? 'PENDING',
-            'audio_url' => $status['audio_url'] ?? null,
-            'from_cache' => false,
-            'created_at' => $status['created_at'] ?? null,
-            'updated_at' => $status['updated_at'] ?? null
-        ]);
-    }
-    
-    /**
-     * Keshlangan audio faylni yuklash
-     */
-    public function downloadCachedAudio($hash)
-    {
-        $filename = 'tts_audio/' . $hash . '.mp3';
-        
-        if (!Storage::exists($filename)) {
-            abort(404, 'Audio fayl topilmadi');
-        }
-        
-        return Storage::download($filename, $hash . '.mp3', [
-            'Content-Type' => 'audio/mpeg'
-        ]);
-    }
-    
-    /**
-     * Keshni tozalash (ixtiyoriy - admin uchun)
-     */
-    public function clearCache(Request $request)
-    {
-        $type = $request->input('type', 'all'); // 'stt', 'tts', 'all'
-        
-        if ($type === 'stt' || $type === 'all') {
-            Cache::flush(); // yoki Cache::tags(['stt'])->flush()
-        }
-        
-        if ($type === 'tts' || $type === 'all') {
-            // TTS audio fayllarni o'chirish
-            Storage::deleteDirectory('tts_audio');
-        }
-        
-        return response()->json([
-            'success' => true,
-            'message' => 'Kesh tozalandi'
-        ]);
+
+        return implode(' ', $parts);
     }
 }

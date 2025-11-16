@@ -23,17 +23,15 @@ class CustomDashboard extends Page
     
     public function getStations()
     {
-        $stations = Station::with(['employees', 'cadastres', 'branchRailways', 'mainRailways'])->get();
+        $stations = Station::with(['employees', 'cadastres', 'branchRailways'])->get();
         $result = [];
         
         foreach ($stations as $station) {
             $coords = $station->coordinates ?? [];
             $details = $station->details ?? [];
-            // Haqiqiy ma'lumotlarni database dan olish
             $employeesCount = $station->employees->count();
             $totalArea = $station->cadastres->sum('total_area');
             $branchRailsCount = $station->branchRailways->count();
-            $mainRailsCount = $station->mainRailways->count();
             
             $result[] = [
                 'id' => $station->id,
@@ -55,7 +53,6 @@ class CustomDashboard extends Page
                     'employees' => $employeesCount,
                     'area' => round($totalArea, 2),
                     'branch_tracks' => $branchRailsCount,
-                    'railway_tracks' => $mainRailsCount,
                     'facilities' => $details['facilities'] ?? [],
                     '360_link' => $details['360_link'] ?? null
                 ]
