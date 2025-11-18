@@ -116,7 +116,7 @@ class VoiceController extends Controller
             ->attach('file', $audioContent, $audioFile->getClientOriginalName())
             ->post($this->baseUrl . '/api/v1/stt', [
                 'language' => 'uz',
-                'model' => 'davron-neutral',
+                'model' => 'shoira',
                 'blocking' => 'true'
             ]);
         
