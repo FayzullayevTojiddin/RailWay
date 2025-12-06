@@ -20,6 +20,7 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\BulkActionGroup;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Tables\Columns\ViewColumn;
 
 class ReportsRelationManager extends RelationManager
 {
@@ -150,6 +151,13 @@ class ReportsRelationManager extends RelationManager
                     ->label('Sana')
                     ->date('d.m.Y')
                     ->sortable(),
+
+                ViewColumn::make('chart')
+                    ->label('Grafik')
+                    ->view('filament.tables.columns.report-chart') // quyida yaratamiz
+                    ->alignCenter()
+                    ->disableClick() // defaultda click bo'lmasin
+                    ->sortable(false),
 
                 // Faqat xarajat/daromad EMAS bo'lsa ko'rsat
                 TextColumn::make('planned_value')

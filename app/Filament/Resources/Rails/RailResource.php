@@ -40,7 +40,7 @@ class RailResource extends Resource
     
     public static function getNavigationBadgeColor(): ?string
     {
-        $count = static::getModel()::where('status', 'Faol')->count();
+        $count = static::getModel()::count();
         $total = static::getModel()::count();
         
         if ($total === 0) return 'gray';
