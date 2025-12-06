@@ -40,7 +40,7 @@ class UserResource extends Resource
     
     public static function getNavigationBadgeColor(): ?string
     {
-        $activeUsers = static::getModel()::where('is_active', true)->count();
+        $activeUsers = static::getModel()::count();
         $totalUsers = static::getModel()::count();
         
         if ($totalUsers === 0) return 'gray';

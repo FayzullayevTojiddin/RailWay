@@ -5,7 +5,10 @@ use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\MapController;
 
-// Private rasmlarni ko'rsatish
+Route::get('', function() {
+    return redirect('/super');
+});
+
 Route::get('/station-images/{filename}', function ($filename) {
     // Database dan to'liq yo'l keladi: stations/image.jpg
     $path = $filename;
