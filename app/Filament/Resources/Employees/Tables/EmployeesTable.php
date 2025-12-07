@@ -45,6 +45,7 @@ class EmployeesTable
 
                 TextColumn::make('role')
                     ->label('Lavozim')
+                    ->limit(20)
                     ->sortable()
                     ->searchable(),
 

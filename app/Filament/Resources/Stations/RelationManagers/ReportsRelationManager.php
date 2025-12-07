@@ -146,6 +146,7 @@ class ReportsRelationManager extends RelationManager
 
         return $table
             ->recordTitleAttribute('type')
+            ->recordClasses(fn ($record) => 'py-4')
             ->columns([
                 TextColumn::make('date')
                     ->label('Sana')
