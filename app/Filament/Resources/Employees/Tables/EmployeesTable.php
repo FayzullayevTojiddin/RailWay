@@ -65,23 +65,11 @@ class EmployeesTable
                     ->color(fn (string $state): string => $state === 'male' ? 'blue' : 'pink')
                     ->toggleable(),
 
-                TextColumn::make('birth_date')
-                    ->label('Tug\'ilgan sana')
-                    ->date('d.m.Y')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-
                 TextColumn::make('joined_at')
                     ->label('Ishga kirgan')
                     ->dateTime('d.m.Y')
                     ->sortable()
                     ->toggleable(),
-
-                TextColumn::make('created_at')
-                    ->label('Yaratilgan')
-                    ->dateTime('d.m.Y H:i')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 SelectFilter::make('station_id')

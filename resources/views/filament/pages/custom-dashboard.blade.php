@@ -263,7 +263,7 @@
                                 <template x-if="station && station.coordinates">
                                     <div 
                                         class="station-marker"
-                                        :class="{ 'enterprise': station.type === 'enterprise' }"
+                                        :class="{ 'enterprise': station.type && station.type.startsWith('enterprise_') }"
                                         :style="`left: ${station.coordinates.x}%; top: ${station.coordinates.y}%;`"
                                         :data-station-id="station.id"
                                         @click="openStationDetails(station)"
@@ -705,7 +705,7 @@
                     this.stations.forEach(station => {
                         if (station.location && station.location.lat && station.location.lng) {
                             const iconUrl = this.getStationIcon(station.type);
-                            const isEnterprise = station.type === 'enterprise';
+                            const isEnterprise = station.type && station.type.startsWith('enterprise_');
 
                             // REAL MAP uchun enterprise biroz kattaroq: 18px
                             const sizePx = isEnterprise ? 18 : 50;
@@ -1014,22 +1014,28 @@
                 },
                 
                 getStationType(type) {
+                    if (type?.startsWith('enterprise_')) {
+                        return 'Korxona';
+                    }
                     const types = {
-                        'big_station': 'Stantsiya',
-                        'small_station': 'Stantsiya',
-                        'enterprise': 'Korxona',
-                        'bridge': 'Ko\'prik'
+                        'big_station': 'Katta Stantsiya',
+                        'small_station': 'Kichik Stantsiya',
+                        'bridge': "Ko'prik"
                     };
                     return types[type] || 'Stantsiya';
                 },
-                
+
                 getStationIcon(type) {
+                    if (type?.startsWith('enterprise_')) {
+                        return '/storage/enterprise-icon.png';
+                    }
+
                     const icons = {
                         'big_station': '/storage/big-station-icon.png',
                         'small_station': '/storage/small-station-icon.png',
-                        'enterprise': '/storage/enterprise-icon.png',
                         'bridge': '/storage/bridge-icon.png',
                     };
+
                     return icons[type] || '/storage/big-station-icon.png';
                 },
                 

@@ -10,13 +10,17 @@ use Filament\Forms\Components\TextInput;
 use Filament\Actions\Action;
 use Filament\Support\Enums\Alignment;
 use Filament\Schemas\Schema;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\KeyValue;
+use App\Enums\StationType;
 
 class StationForm
 {
     public static function configure(Schema $schema): Schema
     {
         return $schema->schema([
-            Section::make('Asosiy ma\'lumotlar')
+            Section::make("Asosiy ma'lumotlar")
                 ->schema([
                     Grid::make(3)
                         ->schema([
@@ -27,13 +31,8 @@ class StationForm
                                 ->columnSpan(2),
 
                            Select::make('type')
-                                ->label('Ma\'lumot turi')
-                                ->options([
-                                    'big_station'   => 'Katta stansiya',
-                                    'small_station' => 'Kichik stansiya',
-                                    'bridge'        => 'Ko\'prik',
-                                    'enterprise'    => 'Korxona',
-                                ])
+                                ->label("Ma'lumot turi")
+                                ->options(StationType::options())
                                 ->required(),
                         ]),
 
@@ -68,22 +67,22 @@ class StationForm
                             TextInput::make('coordinates.x')
                                 ->label('X - Gorizontal pozitsiya (%)')
                                 ->numeric()
-                                ->step(0.01) // <-- o'zgartirildi: 0.01 bilan 0,1 yoki 2 onlik ruxsat etiladi
+                                ->step(0.01)
                                 ->minValue(0)
                                 ->maxValue(100)
                                 ->suffix('%')
-                                ->helperText('Xaritada chapdan o\'ngga (0-100)')
+                                ->helperText("Xaritada chapdan o'ngga (0-100)")
                                 ->placeholder('50')
                                 ->rules([
                                     'nullable',
-                                    'regex:/^\d+(\.\d{1,2})?$/' // server-side: 0, 1 yoki 2 onlikni ruxsat etadi
+                                    'regex:/^\d+(\.\d{1,2})?$/'
                                 ])
                                 ->dehydrateStateUsing(fn($state) => $state === null ? null : round((float)$state, 2)),
 
                             TextInput::make('coordinates.y')
                                 ->label('Y - Vertikal pozitsiya (%)')
                                 ->numeric()
-                                ->step(0.01) // <-- shu yer ham 0.01 qilish kerak
+                                ->step(0.01)
                                 ->minValue(0)
                                 ->maxValue(100)
                                 ->suffix('%')
@@ -111,6 +110,87 @@ class StationForm
                 ->collapsible()
                 ->collapsed(false),
 
+            Section::make("Stansiya ma'lumotlari")
+                ->schema([
+                    TextInput::make('details.station_class')
+                        ->label("Stantsiyaning classi")
+                        ->numeric()
+                        ->step(1)
+                        ->rules(['nullable', 'integer']),
+
+                    TextInput::make('details.receiving_tracks')
+                        ->label("Qabul qilib jo'natuvchi yo'llar")
+                        ->numeric()
+                        ->step(1)
+                        ->rules(['nullable', 'integer']),
+
+                    TextInput::make('details.traction_tracks')
+                        ->label("Traksion yo'llar")
+                        ->numeric()
+                        ->step(1)
+                        ->rules(['nullable', 'integer']),
+                ])
+                ->visible(fn ($get) => in_array(
+                    $get('type'),
+                    [
+                        StationType::SMALL_STATION->value,
+                        StationType::BIG_STATION->value,
+                    ]
+                ))
+                ->columns(3)
+                ->columnSpanFull(),
+
+            Section::make("PCH ma'lumotlari")
+                ->schema([
+                    Repeater::make('data.pch_values')
+                        ->addActionLabel('Qo‘shish')
+                        ->label("Ma'lumotlar")
+                        ->schema([
+                            TextInput::make('type')
+                                ->label('Turi'),
+                            
+                            TextInput::make('value')
+                                ->label('Qiymati'),
+                        ])
+                        ->columns(2),
+                ])
+                ->visible(fn ($get) => in_array($get('type'), [StationType::ENTERPRISE_PCH->value]))
+                ->columnSpanFull(),
+
+            Section::make("SHCH ma'lumotlari")
+                ->schema([
+                    Repeater::make('data.shch_values')
+                        ->addActionLabel('Qo‘shish')
+                        ->label("Ma'lumotlar")
+                        ->schema([
+                            TextInput::make('type')
+                                ->label('Turi'),
+                            
+                            TextInput::make('value')
+                                ->label('Qiymati'),
+                        ])
+                        ->columns(2),
+                ])
+                ->visible(fn ($get) => in_array($get('type'), [StationType::ENTERPRISE_SHCH->value]))
+                ->columnSpanFull(),
+
+            Section::make("ECH ma'lumotlari")
+                ->schema([
+                    Repeater::make('data.ech_values')
+                        ->addActionLabel('Qo‘shish')
+                        ->label("Ma'lumotlar")
+                        ->schema([
+                            TextInput::make('type')
+                                ->label('Turi'),
+                            
+                            TextInput::make('value')
+                                ->label('Qiymati'),
+                        ])
+                        ->columns(2),
+                ])
+                ->visible(fn ($get) => in_array($get('type'), [StationType::ENTERPRISE_ECH->value]))
+                ->columnSpanFull(),
+
             Section::make('360° ko\'rish')
                 ->description('Stansiyani 360 daraja ko\'rish uchun havola')
                 ->schema([
@@ -125,36 +205,10 @@ class StationForm
                 ->collapsible()
                 ->collapsed(false),
 
-            // Yangi bo'lim: faqat small_station yoki big_station turlari uchun ko'rinadi.
-            Section::make('Texnik ma\'lumotlar')
-                ->schema([
-                    TextInput::make('details.station_class')
-                        ->label("Stantsiyaning classi")
-                        ->numeric()
-                        ->step(1)
-                        ->rules(['nullable', 'integer'])
-                        ->columnSpanFull(),
-
-                    TextInput::make('details.receiving_tracks')
-                        ->label("Qabul qilib jo'natuvchi yo'llar")
-                        ->numeric()
-                        ->step(1)
-                        ->rules(['nullable', 'integer'])
-                        ->columnSpanFull(),
-
-                    TextInput::make('details.traction_tracks')
-                        ->label("Traksion yo'llar")
-                        ->numeric()
-                        ->step(1)
-                        ->rules(['nullable', 'integer'])
-                        ->columnSpanFull(),
-                ])
-                ->visible(fn ($get) => in_array($get('type'), ['small_station', 'big_station'])),
-
             Section::make('Kadastr rasmi')
                 ->description('Stansiya kadastr pasporti yoki xaritasining rasmi (1 ta rasm)')
                 ->schema([
-                    \Filament\Forms\Components\FileUpload::make('details.cadastre_image')
+                    FileUpload::make('details.cadastre_image')
                         ->label('Kadastr rasmi')
                         ->image()
                         ->directory('cadastres')
@@ -192,7 +246,7 @@ class StationForm
             Section::make('Rasmlar')
                 ->description('Stansiya rasmlarini yuklang (maksimal 10 ta)')
                 ->schema([
-                    \Filament\Forms\Components\FileUpload::make('images')
+                    FileUpload::make('images')
                         ->label('Stansiya rasmlari')
                         ->image()
                         ->multiple()
@@ -203,20 +257,6 @@ class StationForm
                 ])
                 ->collapsible()
                 ->collapsed(false),
-
-            Section::make('Qo‘shimcha atributlar')
-                ->columnSpanFull()
-                ->schema([
-                    \Filament\Forms\Components\KeyValue::make('details.additional')
-                        ->label('Atributlar')
-                        ->addButtonLabel('Atribut qo‘shish')
-                        ->keyLabel('Nom')
-                        ->valueLabel('Qiymat')
-                        ->reorderable()
-                        ->columnSpanFull(),
-                ])
-                ->collapsible()
-                ->collapsed()
         ]);
     }
 }

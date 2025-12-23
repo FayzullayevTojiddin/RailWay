@@ -8,6 +8,9 @@ use Filament\Actions\CreateAction;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
+use App\Enums\StationType;
+
 
 class BranchRailwaysRelationManager extends RelationManager
 {
@@ -16,12 +19,21 @@ class BranchRailwaysRelationManager extends RelationManager
     protected static ?string $modelLabel = 'Shaxobcha yo\'l';
     protected static ?string $pluralModelLabel = 'Shaxobcha yo\'llari';
 
+    public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
+    {
+        return in_array(
+            $ownerRecord->type,
+            [
+                StationType::SMALL_STATION->value,
+                StationType::BIG_STATION->value,
+            ]
+        );
+    }
+
     public function form(Schema $schema): Schema
     {
         $schema = BranchRailwayForm::configure($schema);
         
-        // Station relation manager da bo'lganimiz uchun station_id fieldni yashiramiz
-        // Chunki station avtomatik owner record dan olinadi
         $components = collect($schema->getComponents())
             ->map(function ($section) {
                 if (method_exists($section, 'getChildComponents')) {

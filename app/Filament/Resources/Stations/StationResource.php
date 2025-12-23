@@ -19,6 +19,8 @@ use Filament\Tables\Table;
 use UnitEnum;
 use App\Filament\Resources\Stations\RelationManagers\CadastresRelationManager;
 use App\Filament\Resources\Stations\RelationManagers\ReportsRelationManager;
+use Illuminate\Database\Eloquent\Builder;
+use App\Filament\Resources\Stations\RelationManagers\LocomotivesRelationManager;
 
 class StationResource extends Resource
 {
@@ -47,7 +49,10 @@ class StationResource extends Resource
     
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
+        return static::getModel()::whereIn('type', [
+            'small_station',
+            'big_station'
+        ])->count();
     }
     
     public static function getNavigationBadgeColor(): ?string
@@ -71,7 +76,8 @@ class StationResource extends Resource
             EmployeesRelationManager::class,
             BranchRailwaysRelationManager::class,
             CadastresRelationManager::class,
-            ReportsRelationManager::class
+            ReportsRelationManager::class,
+            LocomotivesRelationManager::class,
         ];
     }
 

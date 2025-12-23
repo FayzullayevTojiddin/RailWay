@@ -6,7 +6,7 @@
         $labels = ['Xarajat', 'Daromad'];
         $values = [(float)($record->expense ?? 0), (float)($record->income ?? 0)];
     } else {
-        $labels = ['Reja', 'Haqqiqiy'];
+        $labels = ['Reja', 'Haqiqiy'];
         $values = [(float)($record->planned_value ?? 0), (float)($record->actual_value ?? 0)];
     }
 
@@ -16,14 +16,14 @@
 
     // umumiy o'lchamlar
     $width = 120;
-    $height = 48;
+    $height = 60; // balandlikni oshirdim
 @endphp
 
 @if($type === 'xarajat_daromad')
     {{-- BAR CHART: Xarajat / Daromad --}}
     @php
-        $pad = 6;
-        $barGap = 6;
+        $pad = 8;
+        $barGap = 8;
         $bars = count($values);
         $maxVal = max($values) > 0 ? max($values) : 1;
         $barWidth = intval(($width - $pad*2 - ($bars-1)*$barGap) / $bars);
@@ -34,7 +34,7 @@
         }
     @endphp
 
-    <div style="width:{{ $width }}px; height:{{ $height }}px; display:flex; align-items:center; justify-content:center;">
+    <div style="width:{{ $width }}px; height:{{ $height }}px; display:flex; align-items:flex-end; justify-content:center; padding-bottom: 4px;">
         <svg role="img" aria-label="chart-{{ $record->id }}" width="{{ $width }}" height="{{ $height }}" viewBox="0 0 {{ $width }} {{ $height }}" xmlns="http://www.w3.org/2000/svg" style="display:block;">
             @foreach($values as $i => $v)
                 @php
@@ -47,7 +47,7 @@
                     $label = $labels[$i] ?? '';
                     $displayValue = number_format($v, 0, '.', ' ');
                 @endphp
-                <rect x="{{ $x }}" y="{{ $y }}" width="{{ $barWidth }}" height="{{ max(1, $barHeight) }}"
+                <rect x="{{ $x }}" y="{{ $y }}" width="{{ $barWidth }}" height="{{ max(2, $barHeight) }}"
                       rx="{{ $rx }}" ry="{{ $rx }}" fill="{{ $fill }}" opacity="0.95">
                     <title>{{ $label }}: {{ $displayValue }}</title>
                 </rect>
@@ -56,14 +56,12 @@
     </div>
 
 @else
-    {{-- DONUT: bajarilish foizi = actual / plan * 100 (markazda haqiqiy foiz, donut 0..100% vizual) --}}
+    {{-- DONUT: bajarilish foizi = actual / plan * 100 --}}
     @php
         $a = $values[0] ?? 0; // reja (plan)
         $b = $values[1] ?? 0; // haqiqiy (actual)
 
-        // bajarilish foizi
         $pctComplete = ($a > 0) ? ($b / $a) * 100 : 0;
-        // donutda 0..100 oralig'ida chizamiz (visual)
         $pctShown = min(max($pctComplete, 0), 100);
 
         // donut params
@@ -76,24 +74,22 @@
         $dashCompleted = ($pctShown / 100) * $circ;
         $dashRemaining = $circ - $dashCompleted;
 
-        // rang: overshoot (actual >= plan) -> green; aks holda purple
         $colorCompleted = ($a > 0 && $b >= $a) ? '#22c55e' : '#6366f1';
         $colorRemaining = '#2d2f34';
-        // markazdagi matn: haqiqiy foiz (1 decimal)
         $centerText = $a > 0 ? number_format($pctComplete, 1) . '%' : '0%';
     @endphp
 
-    <div style="width:{{ $width }}px; height:{{ $height }}px; display:flex; align-items:center; justify-content:center;">
+    <div style="width:{{ $width }}px; height:{{ $height }}px; display:flex; align-items:flex-start; justify-content:center; padding-top: 2px;">
         <svg role="img" aria-label="donut-{{ $record->id }}" width="{{ $width }}" height="{{ $height }}" viewBox="0 0 {{ $width }} {{ $height }}" xmlns="http://www.w3.org/2000/svg" style="display:block;">
-            <g transform="translate(6,0)">
+            <g transform="translate(6,2)">
                 {{-- remaining ring --}}
                 <circle cx="{{ $cx }}" cy="{{ $cy }}" r="{{ $r }}" fill="none" stroke="{{ $colorRemaining }}" stroke-width="10" stroke-linecap="round" stroke-dasharray="{{ $dashRemaining }} {{ $circ - $dashRemaining }}" transform="rotate(-90 {{ $cx }} {{ $cy }})"></circle>
 
                 {{-- completed ring --}}
                 <circle cx="{{ $cx }}" cy="{{ $cy }}" r="{{ $r }}" fill="none" stroke="{{ $colorCompleted }}" stroke-width="10" stroke-linecap="round" stroke-dasharray="{{ $dashCompleted }} {{ $circ - $dashCompleted }}" transform="rotate(-90 {{ $cx }} {{ $cy }})"></circle>
 
-                {{-- center text (shows >100% too) --}}
-                <text x="{{ $cx }}" y="{{ $cy+4 }}" font-size="10" text-anchor="middle" fill="#E5E7EB" style="font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;">
+                {{-- center text --}}
+                <text x="{{ $cx }}" y="{{ $cy+4 }}" font-size="10" font-weight="600" text-anchor="middle" fill="#E5E7EB" style="font-family: system-ui, -apple-system, 'Segoe UI', Roboto;">
                     {{ $centerText }}
                 </text>
 
@@ -101,12 +97,12 @@
             </g>
 
             {{-- legend --}}
-            <g transform="translate(66,6)">
-                <rect x="0" y="0" width="9" height="9" rx="2" fill="#aab0ff"></rect>
-                <text x="14" y="7.5" font-size="10" fill="#9CA3AF">{{ \Illuminate\Support\Str::limit($labels[0] ?? 'Reja', 10) }}</text>
+            <g transform="translate(66,8)">
+                <rect x="0" y="0" width="8" height="8" rx="2" fill="#aab0ff"></rect>
+                <text x="12" y="7" font-size="9" fill="#9CA3AF">{{ \Illuminate\Support\Str::limit($labels[0] ?? 'Reja', 8) }}</text>
 
-                <rect x="0" y="18" width="9" height="9" rx="2" fill="{{ $colorCompleted }}"></rect>
-                <text x="14" y="25.5" font-size="10" fill="#9CA3AF">{{ \Illuminate\Support\Str::limit($labels[1] ?? 'Haqiqiy', 10) }}</text>
+                <rect x="0" y="16" width="8" height="8" rx="2" fill="{{ $colorCompleted }}"></rect>
+                <text x="12" y="23" font-size="9" fill="#9CA3AF">{{ \Illuminate\Support\Str::limit($labels[1] ?? 'Haqiqiy', 8) }}</text>
             </g>
         </svg>
     </div>

@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\Stations\RelationManagers;
 
 use App\Models\Report;
-use App\Filament\Resources\Stations\RelationManagers\Widgets\ReportsWidget;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -13,25 +12,15 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Tables\Filters\SelectFilter;
-use Filament\Actions\CreateAction;
-use Filament\Actions\EditAction;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\BulkActionGroup;
 use Illuminate\Database\Eloquent\Builder;
-use Filament\Schemas\Components\Utilities\Get;
 use Filament\Tables\Columns\ViewColumn;
 
 class ReportsRelationManager extends RelationManager
 {
     protected static string $relationship = 'reports';
-
     protected static ?string $title = 'Hisobotlar';
     protected static ?string $modelLabel = 'Hisobot';
     protected static ?string $pluralModelLabel = 'Hisobotlar';
-    
-    // Filter o'zgarganda table refresh bo'lishi uchun
-    protected $listeners = ['updateTableFilters' => '$refresh'];
 
     public function form(Schema $schema): Schema
     {
@@ -67,27 +56,11 @@ class ReportsRelationManager extends RelationManager
                     ->displayFormat('m.Y')
                     ->format('Y-m-01')
                     ->default(now()->startOfMonth())
-                    ->extraAttributes([
-                        'data-flatpickr' => json_encode([
-                            'plugins' => [
-                                [
-                                    'monthSelectPlugin',
-                                    [
-                                        'shorthand'  => true,
-                                        'dateFormat' => 'm.Y',
-                                        'altFormat'  => 'm.Y',
-                                        'theme'      => 'light',
-                                    ]
-                                ]
-                            ]
-                        ])
-                    ])
                     ->columnSpanFull(),
 
                 TextInput::make('planned_value')
                     ->label('Rejadagi qiymat')
                     ->numeric()
-                    ->suffix("dona/so'm")
                     ->default(null)
                     ->columnSpan(1)
                     ->visible(fn ($get) => $get('type') !== 'xarajat_daromad')
@@ -97,7 +70,6 @@ class ReportsRelationManager extends RelationManager
                 TextInput::make('actual_value')
                     ->label('Haqiqiy qiymat')
                     ->numeric()
-                    ->suffix("dona/so'm")
                     ->default(null)
                     ->columnSpan(1)
                     ->visible(fn ($get) => $get('type') !== 'xarajat_daromad')
@@ -107,7 +79,6 @@ class ReportsRelationManager extends RelationManager
                 TextInput::make('expense')
                     ->label('Xarajat')
                     ->numeric()
-                    ->suffix("so'm")
                     ->default(null)
                     ->columnSpan(1)
                     ->visible(fn ($get) => $get('type') === 'xarajat_daromad')
@@ -117,7 +88,6 @@ class ReportsRelationManager extends RelationManager
                 TextInput::make('income')
                     ->label('Daromad')
                     ->numeric()
-                    ->suffix("so'm")
                     ->default(null)
                     ->columnSpan(1)
                     ->visible(fn ($get) => $get('type') === 'xarajat_daromad')
@@ -134,19 +104,10 @@ class ReportsRelationManager extends RelationManager
             ->columns(2);
     }
 
-    protected function getSelectedType(): ?string
-    {
-        return $this->tableFilters['type']['value'] ?? 'yuk_ortilishi';
-    }
-
     public function table(Table $table): Table
     {
-        $selectedType = $this->getSelectedType();
-        $isExpenseIncome = $selectedType === 'xarajat_daromad';
-
         return $table
             ->recordTitleAttribute('type')
-            ->recordClasses(fn ($record) => 'py-4')
             ->columns([
                 TextColumn::make('date')
                     ->label('Sana')
@@ -155,42 +116,54 @@ class ReportsRelationManager extends RelationManager
 
                 ViewColumn::make('chart')
                     ->label('Grafik')
-                    ->view('filament.tables.columns.report-chart') // quyida yaratamiz
+                    ->view('filament.tables.columns.report-chart')
                     ->alignCenter()
-                    ->disableClick() // defaultda click bo'lmasin
+                    ->disableClick()
+                    ->extraCellAttributes(['style' => 'height: 100px; vertical-align: middle;'])
                     ->sortable(false),
 
-                // Faqat xarajat/daromad EMAS bo'lsa ko'rsat
                 TextColumn::make('planned_value')
                     ->label('Reja')
-                    ->numeric(decimalPlaces: 0, decimalSeparator: '.', thousandsSeparator: ' ')
-                    ->sortable()
-                    ->visible(!$isExpenseIncome),
+                    ->formatStateUsing(function ($state, $record) {
+                        if (!$state) return '-';
+                        $formatted = number_format($state, 0, '.', ' ');
+                        $unit = match($record->type) {
+                            'pul_tushumi' => " so'm",
+                            'yuk_ortilishi', 'yuk_tushurilishi' => ' dona / vagon',
+                            default => ''
+                        };
+                        return $formatted . $unit;
+                    })
+                    ->sortable(),
 
                 TextColumn::make('actual_value')
                     ->label('Haqiqiy')
-                    ->numeric(decimalPlaces: 0, decimalSeparator: '.', thousandsSeparator: ' ')
-                    ->sortable()
-                    ->visible(!$isExpenseIncome),
+                    ->formatStateUsing(function ($state, $record) {
+                        if (!$state) return '-';
+                        $formatted = number_format($state, 0, '.', ' ');
+                        $unit = match($record->type) {
+                            'pul_tushumi' => " so'm",
+                            'yuk_ortilishi', 'yuk_tushurilishi' => ' dona / vagon',
+                            default => ''
+                        };
+                        return $formatted . $unit;
+                    })
+                    ->sortable(),
 
-                // Faqat xarajat/daromad BO'LSA ko'rsat
                 TextColumn::make('expense')
                     ->label('Xarajat')
-                    ->numeric(decimalPlaces: 0, decimalSeparator: '.', thousandsSeparator: ' ')
-                    ->sortable()
-                    ->visible($isExpenseIncome),
+                    ->formatStateUsing(fn ($state) => $state ? number_format($state, 0, '.', ' ') . " so'm" : '-')
+                    ->sortable(),
 
                 TextColumn::make('income')
                     ->label('Daromad')
-                    ->numeric(decimalPlaces: 0, decimalSeparator: '.', thousandsSeparator: ' ')
-                    ->sortable()
-                    ->visible($isExpenseIncome),
+                    ->formatStateUsing(fn ($state) => $state ? number_format($state, 0, '.', ' ') . " so'm" : '-')
+                    ->sortable(),
 
                 TextColumn::make('percentage')
-                    ->label(fn () => $this->getSelectedType() === 'xarajat_daromad' ? 'Foyda' : 'Bajarilish')
-                    ->getStateUsing(function ($record) use ($isExpenseIncome): string {
-                        if ($isExpenseIncome) {
-                            // Xarajat va daromad uchun - foyda foizini hisoblash
+                    ->label('Natija')
+                    ->getStateUsing(function ($record): string {
+                        if ($record->type === 'xarajat_daromad') {
                             $expense = $record->expense ?? 0;
                             $income = $record->income ?? 0;
                             
@@ -204,16 +177,14 @@ class ReportsRelationManager extends RelationManager
                             $sign = $profitPercent >= 0 ? '+' : '';
                             return $sign . number_format($profitPercent, 1) . '%';
                         } else {
-                            // Boshqa turlar uchun - bajarilish foizi
                             if (($record->planned_value ?? 0) == 0) return '0%';
                             $pct = ($record->actual_value ?? 0) / ($record->planned_value ?? 1) * 100;
                             return number_format($pct, 1) . '%';
                         }
                     })
                     ->badge()
-                    ->color(function ($record) use ($isExpenseIncome): string {
-                        if ($isExpenseIncome) {
-                            // Xarajat va daromad uchun - foyda rangini aniqlash
+                    ->color(function ($record): string {
+                        if ($record->type === 'xarajat_daromad') {
                             $expense = $record->expense ?? 0;
                             $income = $record->income ?? 0;
                             
@@ -224,12 +195,11 @@ class ReportsRelationManager extends RelationManager
                             $profit = $income - $expense;
                             $profitPercent = ($profit / $expense) * 100;
                             
-                            if ($profitPercent >= 50) return 'success';  // 50%+ foyda
-                            if ($profitPercent >= 0) return 'warning';   // 0-50% foyda
-                            if ($profitPercent >= -20) return 'danger';  // kichik zarar
-                            return 'gray';                               // katta zarar
+                            if ($profitPercent >= 50) return 'success';
+                            if ($profitPercent >= 0) return 'warning';
+                            if ($profitPercent >= -20) return 'danger';
+                            return 'gray';
                         } else {
-                            // Boshqa turlar uchun
                             if (($record->planned_value ?? 0) == 0) return 'gray';
                             $pct = ($record->actual_value ?? 0) / ($record->planned_value ?? 1) * 100;
                             if ($pct >= 100) return 'success';
@@ -265,10 +235,8 @@ class ReportsRelationManager extends RelationManager
                     ->native(false),
             ])
             ->filtersLayout(\Filament\Tables\Enums\FiltersLayout::AboveContent)
-            ->filtersFormColumns(2)
-            ->filtersFormWidth('md')
-            ->persistFiltersInSession()
             ->deferFilters(false)
+            ->filtersFormColumns(2)
             ->headerActions([
                 \Filament\Actions\CreateAction::make()
                     ->label('Yangi hisobot')
@@ -276,7 +244,7 @@ class ReportsRelationManager extends RelationManager
                     ->modalHeading('Hisobot yaratish')
                     ->modalWidth('lg')
                     ->createAnother(false)
-                    ->successNotificationTitle('Hisobot muvaffaqiyatli yaratildi'),
+                    ->successNotificationTitle('Hisobot yaratildi'),
             ])
             ->actions([
                 \Filament\Actions\EditAction::make()
@@ -298,7 +266,6 @@ class ReportsRelationManager extends RelationManager
                     \Filament\Actions\DeleteBulkAction::make()
                         ->label('O\'chirish')
                         ->modalHeading('Hisobotlarni o\'chirish')
-                        ->modalDescription('Tanlangan hisobotlarni o\'chirmoqchimisiz?')
                         ->successNotificationTitle('Hisobotlar o\'chirildi'),
                 ]),
             ])

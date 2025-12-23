@@ -12,6 +12,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Filament\Actions\ActionGroup;
+use App\Enums\StationType;
 
 class StationsTable
 {
@@ -34,25 +35,18 @@ class StationsTable
                 TextColumn::make('type')
                     ->label('Turi')
                     ->badge()
-                    ->formatStateUsing(fn (?string $state): string => match ($state) {
-                        'big_station'   => 'Katta stansiya',
-                        'small_station' => 'Kichik stansiya',
-                        'bridge'        => 'Ko\'prik',
-                        'enterprise'    => 'Korxona',
-                        default         => $state ?? '',
-                    })
-                    ->color(fn (?string $state): string => match ($state) {
-                        'big_station'   => 'primary',
-                        'small_station' => 'info',
-                        'bridge'        => 'warning',
-                        'enterprise'    => 'success',
-                        default         => 'gray',
-                    })
+                    ->formatStateUsing(fn (?string $state) =>
+                        StationType::tryFrom($state)?->groupLabel() ?? '-'
+                    )
+                    ->color(fn (?string $state) =>
+                        StationType::tryFrom($state)?->color() ?? 'gray'
+                    )
                     ->sortable(),
 
-                TextColumn::make('description')
-                    ->label('Ta\'rif')
-                    ->limit(50),
+
+                TextColumn::make('employees')
+                    ->label('Xodimlar soni')
+                    ->getStateUsing(fn ($record) => $record->employees()->count()),
                     
                 ImageColumn::make('images')
                     ->label('Rasmlar')
@@ -76,27 +70,6 @@ class StationsTable
             ->filters([
                 SelectFilter::make('type')
                     ->label('Turi')
-                    ->options([
-                        'road_code' => 'Yo\'l kodi',
-                        'railway_branches' => 'Temir yo\'l tarmoqlari',
-                        'esr_code' => 'ESR kodi',
-                        'country' => 'Mamlakat',
-                        'road' => 'Yo\'l',
-                        'mtu_name' => 'MTU nomi',
-                        'station_category' => 'Toifa',
-                        'station_function' => 'Vazifa',
-                        'station_class' => 'Kategoriya',
-                        'cargo_operations' => 'Yuk ishlari',
-                        'tariff_application' => 'Tarif',
-                        'cargo_actions' => 'Yuk amallari',
-                        'point_type' => 'Punkt turi',
-                        'transit_point' => 'Tranzit',
-                        'operator' => 'Operator',
-                        'latitude' => 'Kenglik',
-                        'longitude' => 'Uzunlik',
-                        'weather' => 'Ob-Havo',
-                    ])
-                    ->multiple(),
             ])
             ->actions([
                 ActionGroup::make([
