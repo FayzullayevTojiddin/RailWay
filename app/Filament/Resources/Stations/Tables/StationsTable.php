@@ -50,9 +50,9 @@ class StationsTable
                     })
                     ->sortable(),
 
-                TextColumn::make('description')
-                    ->label('Ta\'rif')
-                    ->limit(50),
+                TextColumn::make('employees')
+                    ->label('Xodimlar soni')
+                    ->getStateUsing(fn ($record) => $record->employees()->count()),
                     
                 ImageColumn::make('images')
                     ->label('Rasmlar')
