@@ -109,6 +109,16 @@ class ReportsRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('type')
             ->columns([
+                TextColumn::make('type')
+                    ->label('Turi')
+                    ->formatStateUsing(fn ($state) => match ($state) {
+                        'yuk_ortilishi'   => '📦 Oylik yuk ortilishi',
+                        'yuk_tushurilishi'=> '📤 Oylik yuk tushurilishi',
+                        'pul_tushumi'    => '💰 Oylik pul tushumi',
+                        'xarajat_daromad'=> '📊 Oylik xarajat va daromad',
+                        default          => '📋 Boshqalar',
+                    }),
+                    
                 TextColumn::make('date')
                     ->label('Sana')
                     ->date('d.m.Y')
