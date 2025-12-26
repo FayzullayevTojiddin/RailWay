@@ -145,6 +145,7 @@ class StationForm
                 ->columnSpanFull()
                 ->schema([
                     RichEditor::make('details.additional')
+                        ->nullable()
                         ->label("Qo'shimcha ma'lumotlari")
                         ->columnSpanFull(),
                 ])
@@ -161,7 +162,6 @@ class StationForm
                         StationType::ENTERPRISE_RJU->value,
                     ]
                 ))
-                ->nullable()
                 ->collapsible(),
 
             Section::make('360° ko\'rish')
