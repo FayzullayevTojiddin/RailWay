@@ -161,6 +161,7 @@ class StationForm
                         StationType::ENTERPRISE_RJU->value,
                     ]
                 ))
+                ->nullable()
                 ->collapsible(),
 
             Section::make('360° ko\'rish')
