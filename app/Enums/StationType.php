@@ -12,8 +12,8 @@ enum StationType: string
     case ENTERPRISE_SHCH = 'enterprise_shch';
     case ENTERPRISE_ECH = 'enterprise_ech';
     case ENTERPRISE_TO = 'enterprise_to';
-    case ENTERPRISE_PM = 'enterprise_pm';
-    case ENTERPRISE_VCH = 'enterprise_vch';
+    case ENTERPRISE_PMS = 'enterprise_pms';
+    case ENTERPRISE_VCHD = 'enterprise_vchd';
     case ENTERPRISE_RJU = 'enterprise_rju';
 
     case BRIDGE = 'bridge';
@@ -29,8 +29,8 @@ enum StationType: string
             self::ENTERPRISE_SHCH => 'Korxona (SHCH)',
             self::ENTERPRISE_ECH => 'Korxona (ECH)',
             self::ENTERPRISE_TO => 'Korxona (TO)',
-            self::ENTERPRISE_PM => 'Korxona (PM)',
-            self::ENTERPRISE_VCH => 'Korxona (VCH)',
+            self::ENTERPRISE_PMS => 'Korxona (PM)',
+            self::ENTERPRISE_VCHD => 'Korxona (VCH)',
             self::ENTERPRISE_RJU => 'Korxona (RJU)',
 
             self::BRIDGE => 'Ko‘prik',
@@ -55,8 +55,8 @@ enum StationType: string
             self::ENTERPRISE_SHCH,
             self::ENTERPRISE_ECH,
             self::ENTERPRISE_TO,
-            self::ENTERPRISE_PM,
-            self::ENTERPRISE_VCH,
+            self::ENTERPRISE_PMS,
+            self::ENTERPRISE_VCHD,
             self::ENTERPRISE_RJU => 'Korxona',
 
             self::BRIDGE => 'Ko‘prik',
@@ -74,8 +74,8 @@ enum StationType: string
             self::ENTERPRISE_SHCH,
             self::ENTERPRISE_ECH,
             self::ENTERPRISE_TO,
-            self::ENTERPRISE_PM,
-            self::ENTERPRISE_VCH,
+            self::ENTERPRISE_PMS,
+            self::ENTERPRISE_VCHD,
             self::ENTERPRISE_RJU => 'success',
 
             self::BRIDGE => 'warning',
