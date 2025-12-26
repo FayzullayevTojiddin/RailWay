@@ -141,27 +141,27 @@ class StationForm
                 ->columns(3)
                 ->columnSpanFull(),
 
-            // Section::make("Qo'shimcha ma'lumotlari")
-            //     ->columnSpanFull()
-            //     ->schema([
-            //         RichEditor::make('details.additional')
-            //             ->label("Qo'shimcha ma'lumotlari")
-            //             ->columnSpanFull(),
-            //     ])
-            //     ->visible(fn ($get) => in_array(
-            //         $get('type'),
-            //         [
-            //             StationType::ENTERPRISE_PCH->value,
-            //             StationType::ENTERPRISE_TCH->value,
-            //             StationType::ENTERPRISE_SHCH->value,
-            //             StationType::ENTERPRISE_ECH->value,
-            //             StationType::ENTERPRISE_TO->value,
-            //             StationType::ENTERPRISE_PMS->value,
-            //             StationType::ENTERPRISE_VCHD->value,
-            //             StationType::ENTERPRISE_RJU->value,
-            //         ]
-            //     ))
-            //     ->collapsible(),
+            Section::make("Qo'shimcha ma'lumotlari")
+                ->columnSpanFull()
+                ->schema([
+                    RichEditor::make('details.additional')
+                        ->label("Qo'shimcha ma'lumotlari")
+                        ->columnSpanFull(),
+                ])
+                ->visible(fn ($get) => in_array(
+                    $get('type'),
+                    [
+                        StationType::ENTERPRISE_PCH->value,
+                        StationType::ENTERPRISE_TCH->value,
+                        StationType::ENTERPRISE_SHCH->value,
+                        StationType::ENTERPRISE_ECH->value,
+                        StationType::ENTERPRISE_TO->value,
+                        StationType::ENTERPRISE_PMS->value,
+                        StationType::ENTERPRISE_VCHD->value,
+                        StationType::ENTERPRISE_RJU->value,
+                    ]
+                ))
+                ->collapsible(),
 
             Section::make('360° ko\'rish')
                 ->description('Stansiyani 360 daraja ko\'rish uchun havola')
