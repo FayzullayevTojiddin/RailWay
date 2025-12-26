@@ -140,7 +140,7 @@ class StationForm
                 ->columns(3)
                 ->columnSpanFull(),
 
-            Section::make("PCH ma'lumotlari")
+            Section::make("PCH ma'lumotlar")
                 ->schema([
                     Repeater::make('details.pch_values')
                         ->addActionLabel('Qo‘shish')
