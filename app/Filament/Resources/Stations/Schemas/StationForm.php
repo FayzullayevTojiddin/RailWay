@@ -144,7 +144,7 @@ class StationForm
             Section::make("Qo'shimcha ma'lumotlari")
                 ->columnSpanFull()
                 ->schema([
-                    RichEditor::make('details.additional')
+                    RichEditor::make('details.addional_datas')
                         ->nullable()
                         ->label("Qo'shimcha ma'lumotlari")
                         ->columnSpanFull(),

@@ -25,10 +25,6 @@ class Station extends Model
         'coordinates' => 'array',
     ];
 
-    protected $attributes = [
-        'details' => ['additional' => ''],
-    ];
-
     public function employees(): HasMany
     {
         return $this->hasMany(Employee::class);
