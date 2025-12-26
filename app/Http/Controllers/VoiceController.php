@@ -51,7 +51,7 @@ class VoiceController extends Controller
         $endpoint = $this->baseUrl . '/api/v1/tts';
         $payload = [
             'text' => $text,
-            'model' => '',
+            'model' => 'lola',
             'blocking' => 'true',
         ];
         try {
@@ -116,7 +116,7 @@ class VoiceController extends Controller
             ->attach('file', $audioContent, $audioFile->getClientOriginalName())
             ->post($this->baseUrl . '/api/v1/stt', [
                 'language' => 'uz',
-                'model' => 'shoira',
+                'model' => 'lola',
                 'blocking' => 'true'
             ]);
         
