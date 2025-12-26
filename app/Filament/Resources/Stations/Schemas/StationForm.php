@@ -142,7 +142,7 @@ class StationForm
 
             Section::make("PCH ma'lumotlari")
                 ->schema([
-                    Repeater::make('data.pch_values')
+                    Repeater::make('details.pch_values')
                         ->addActionLabel('Qo‘shish')
                         ->label("Ma'lumotlar")
                         ->schema([
@@ -159,7 +159,7 @@ class StationForm
 
             Section::make("SHCH ma'lumotlari")
                 ->schema([
-                    Repeater::make('data.shch_values')
+                    Repeater::make('details.shch_values')
                         ->addActionLabel('Qo‘shish')
                         ->label("Ma'lumotlar")
                         ->schema([
@@ -176,7 +176,7 @@ class StationForm
 
             Section::make("ECH ma'lumotlari")
                 ->schema([
-                    Repeater::make('data.ech_values')
+                    Repeater::make('details.ech_values')
                         ->addActionLabel('Qo‘shish')
                         ->label("Ma'lumotlar")
                         ->schema([
