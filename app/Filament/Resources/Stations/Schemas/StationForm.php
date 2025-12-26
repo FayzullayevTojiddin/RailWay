@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Stations\Schemas;
 
+use Filament\Forms\Components\RichEditor;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\Select;
@@ -143,12 +144,8 @@ class StationForm
             Section::make("Qo'shimcha ma'lumotlari")
                 ->columnSpanFull()
                 ->schema([
-                    KeyValue::make('details.additional')
+                    RichEditor::make('details.additional')
                         ->label("Qo'shimcha ma'lumotlari")
-                        ->addButtonLabel("Ma'lumot qo'shish")
-                        ->keyLabel("Kalit")
-                        ->valueLabel("Qiymat")
-                        ->reorderable()
                         ->columnSpanFull(),
                 ])
                 ->visible(fn ($get) => in_array(
