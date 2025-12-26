@@ -140,56 +140,31 @@ class StationForm
                 ->columns(3)
                 ->columnSpanFull(),
 
-            Section::make("PCH ma'lumotlar")
+            Section::make("Qo'shimcha ma'lumotlari")
+                ->columnSpanFull()
                 ->schema([
-                    Repeater::make('details.pch_values')
-                        ->addActionLabel('Qo‘shish')
-                        ->label("Ma'lumotlar")
-                        ->schema([
-                            TextInput::make('type')
-                                ->label('Turi'),
-                            
-                            TextInput::make('value')
-                                ->label('Qiymati'),
-                        ])
-                        ->columns(2),
+                    KeyValue::make('details.additional')
+                        ->label("Qo'shimcha ma'lumotlari")
+                        ->addButtonLabel("Ma'lumot qo'shish")
+                        ->keyLabel("Kalit")
+                        ->valueLabel("Qiymat")
+                        ->reorderable()
+                        ->columnSpanFull(),
                 ])
-                ->visible(fn ($get) => in_array($get('type'), [StationType::ENTERPRISE_PCH->value]))
-                ->columnSpanFull(),
-
-            Section::make("SHCH ma'lumotlari")
-                ->schema([
-                    Repeater::make('details.shch_values')
-                        ->addActionLabel('Qo‘shish')
-                        ->label("Ma'lumotlar")
-                        ->schema([
-                            TextInput::make('type')
-                                ->label('Turi'),
-                            
-                            TextInput::make('value')
-                                ->label('Qiymati'),
-                        ])
-                        ->columns(2),
-                ])
-                ->visible(fn ($get) => in_array($get('type'), [StationType::ENTERPRISE_SHCH->value]))
-                ->columnSpanFull(),
-
-            Section::make("ECH ma'lumotlari")
-                ->schema([
-                    Repeater::make('details.ech_values')
-                        ->addActionLabel('Qo‘shish')
-                        ->label("Ma'lumotlar")
-                        ->schema([
-                            TextInput::make('type')
-                                ->label('Turi'),
-                            
-                            TextInput::make('value')
-                                ->label('Qiymati'),
-                        ])
-                        ->columns(2),
-                ])
-                ->visible(fn ($get) => in_array($get('type'), [StationType::ENTERPRISE_ECH->value]))
-                ->columnSpanFull(),
+                ->visible(fn ($get) => in_array(
+                    $get('type'),
+                    [
+                        StationType::ENTERPRISE_PCH->value,
+                        StationType::ENTERPRISE_TCH->value,
+                        StationType::ENTERPRISE_SHCH->value,
+                        StationType::ENTERPRISE_ECH->value,
+                        StationType::ENTERPRISE_TO->value,
+                        StationType::ENTERPRISE_PMS->value,
+                        StationType::ENTERPRISE_VCHD->value,
+                        StationType::ENTERPRISE_RJU->value,
+                    ]
+                ))
+                ->collapsible(),
 
             Section::make('360° ko\'rish')
                 ->description('Stansiyani 360 daraja ko\'rish uchun havola')
