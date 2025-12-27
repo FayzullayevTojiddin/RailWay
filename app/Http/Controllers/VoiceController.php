@@ -139,7 +139,6 @@ class VoiceController extends Controller
         ->get()
         ->map(fn ($s) => "{$s->id}:{$s->title}")
         ->implode(', ');
-
     $prompt = <<<PROMPT
 Matn: "{$text}"
 
@@ -147,15 +146,15 @@ Mavjud stansiyalar (id:nom):
 {$entities}
 
 Qoidalar:
-- Matn ichidan stansiya nomini qidir
+- Matn istalgan turdagi gap bo‘lishi mumkin (xabar, so‘rov, buyruq, savol)
+- Gap maqsadi muhim emas, FAFAQAT ichidagi stansiya nomini aniqlash kerak
 - Qidiruv katta-kichik harflarga bog‘liq emas
-- Agar matndagi so‘z ro‘yxatdagi stansiya nomiga juda yaqin bo‘lsa
-  (masalan: kichik imlo xatosi, qo‘shimcha so‘zlar, "stansiyasi" kabi),
+- Agar matnda stansiya nomi to‘liq yoki qisman uchrasa
+  (imlo xatosi, qo‘shimcha so‘zlar, "stansiyasi" kabi),
   eng mos keladigan stansiyani tanla
-- Agar moslik juda kuchsiz yoki ishonchsiz bo‘lsa — id va title null bo‘lsin
-- Eng ko‘pi bilan bitta stansiyani tanla
-- Taxminni haddan oshirma
-- Faqat JSON qaytar
+- Agar moslik kuchsiz yoki ishonchsiz bo‘lsa — id va title null bo‘lsin
+- Faqat bitta stansiya tanla
+- Faqat JSON qaytar, izoh yozma
 
 JSON:
 {
