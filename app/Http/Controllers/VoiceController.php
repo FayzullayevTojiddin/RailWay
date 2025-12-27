@@ -127,20 +127,20 @@ class VoiceController extends Controller
     }
     
     private function detectEntity(string $text): ?array
-    {
-        $text = trim($text);
+{
+    $text = trim($text);
 
-        if ($text === '') {
-            return null;
-        }
+    if ($text === '') {
+        return null;
+    }
 
-        $entities = Station::query()
-            ->select('id', 'title')
-            ->get()
-            ->map(fn ($s) => "{$s->id}:{$s->title}")
-            ->implode(', ');
+    $entities = Station::query()
+        ->select('id', 'title')
+        ->get()
+        ->map(fn ($s) => "{$s->id}:{$s->title}")
+        ->implode(', ');
 
-        $prompt = <<<PROMPT
+    $prompt = <<<PROMPT
 Matn: "{$text}"
 
 Mavjud stansiyalar (id:nom):
@@ -149,46 +149,46 @@ Mavjud stansiyalar (id:nom):
 Qoidalar:
 - Matn ichidan stansiya nomini qidir
 - Faqat ro‘yxatda AYNAN mavjud bo‘lgan nomni tanla
-- Agar matnda bunday nom bo‘lmasa — id null bo‘lsin
+- Agar matnda bunday nom bo‘lmasa — id va title null bo‘lsin
 - Taxmin qilma, o‘xshatish yoki tuzatish qilma
 - Faqat JSON qaytar
 
 JSON:
 {
   "id": number|null,
-  "title": string
+  "title": string|null
 }
 PROMPT;
 
-        try {
-            $response = OpenAI::chat()->create([
-                'model' => 'gpt-4o-mini',
-                'temperature' => 0,
-                'messages' => [
-                    ['role' => 'system', 'content' => 'Faqat JSON qaytar.'],
-                    ['role' => 'user', 'content' => $prompt],
-                ],
-            ]);
+    try {
+        $response = OpenAI::chat()->create([
+            'model' => 'gpt-4o-mini',
+            'temperature' => 0,
+            'messages' => [
+                ['role' => 'system', 'content' => 'Faqat JSON qaytar.'],
+                ['role' => 'user', 'content' => $prompt],
+            ],
+        ]);
 
-            $content = preg_replace('/```json|```/i', '', $response->choices[0]->message->content ?? '');
-            $data = json_decode(trim($content), true);
+        $content = preg_replace('/```json|```/i', '', $response->choices[0]->message->content ?? '');
+        $data = json_decode(trim($content), true);
 
-            if (!array_key_exists('id', $data)) {
-                throw new \RuntimeException();
-            }
-
-            return [
-                'id'    => $data['id'] !== null ? (int) $data['id'] : null,
-                'title' => $data['id'] !== null,
-            ];
-
-        } catch (\Throwable) {
-            return [
-                'id'    => null,
-                'title' => $text,
-            ];
+        if (!isset($data['id'], $data['title'])) {
+            throw new \RuntimeException();
         }
+
+        return [
+            'id'    => $data['id'] !== null ? (int) $data['id'] : null,
+            'title' => $data['title'] ?? null,
+        ];
+
+    } catch (\Throwable) {
+        return [
+            'id'    => null,
+            'title' => null,
+        ];
     }
+}
 
 
     private function getResponse(array $intent): string
