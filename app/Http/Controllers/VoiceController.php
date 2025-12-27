@@ -194,7 +194,7 @@ PROMPT;
     private function getResponse(array $intent): string
     {
         if (empty($intent['title']) || empty($intent['id'])) {
-            return $this->unknownResponse($intent['title']);
+            return "Siz so'ragan korxona yoki stansiya haqida ma'lumot topilmadi.";
         }
 
         return $this->getResponseWithID(
@@ -211,10 +211,5 @@ PROMPT;
         } catch(Exception $error) {
             return "Tizimda xatolik. Kechirasiz sizga hozir javob bera olmayman";
         }
-    }
-
-    private function unknownResponse(string $title): string
-    {
-        return "Siz so'ragan $title korxona yoki stansiya topilmadi. Iltimos qaytadan to'liqroq va to'g'riroq so'rang.";
     }
 }
