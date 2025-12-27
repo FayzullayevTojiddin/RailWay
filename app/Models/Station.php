@@ -16,7 +16,8 @@ class Station extends Model
         'title',
         'description',
         'details',
-        'images'
+        'images',
+        'ai_response'
     ];
 
     protected $casts = [

@@ -11,9 +11,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Actions\Action;
 use Filament\Support\Enums\Alignment;
 use Filament\Schemas\Schema;
-use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\KeyValue;
 use App\Enums\StationType;
 
 class StationForm
@@ -230,6 +228,15 @@ class StationForm
                 ])
                 ->collapsible()
                 ->collapsed(false),
+
+            Section::make('AI')
+                ->description("AI Asistan javob berishi uchun kerakli bo'lgan ma'lumotlarni kiriting !")
+                ->schema([
+                    Textarea::make('ai_response')
+                ])
+                ->collapsible()
+                ->collapsed()
+                ->columnSpanFull(),
         ]);
     }
 }
