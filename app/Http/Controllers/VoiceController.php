@@ -141,23 +141,24 @@ class VoiceController extends Controller
             ->implode(', ');
 
         $prompt = <<<PROMPT
-    Matn: "{$text}"
+Matn: "{$text}"
 
-    Mavjud obyektlar (id:nom):
-    {$entities}
+Mavjud stansiyalar (id:nom):
+{$entities}
 
-    Qoidalar:
-    - Faqat EXACT mos keladigan nomni tanla
-    - Agar aynan mos kelmasa — id null bo‘lsin
-    - Hech qanday taxmin, o‘xshatish yoki tuzatish qilma
-    - Faqat JSON qaytar
+Qoidalar:
+- Matn ichidan stansiya nomini qidir
+- Faqat ro‘yxatda AYNAN mavjud bo‘lgan nomni tanla
+- Agar matnda bunday nom bo‘lmasa — id null bo‘lsin
+- Taxmin qilma, o‘xshatish yoki tuzatish qilma
+- Faqat JSON qaytar
 
-    JSON:
-    {
-    "id": number|null,
-    "title": string
-    }
-    PROMPT;
+JSON:
+{
+  "id": number|null,
+  "title": string
+}
+PROMPT;
 
         try {
             $response = OpenAI::chat()->create([
