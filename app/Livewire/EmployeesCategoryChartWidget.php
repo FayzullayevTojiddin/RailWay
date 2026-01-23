@@ -43,7 +43,7 @@ class EmployeesCategoryChartWidget extends ChartWidget
                     'backgroundColor' => ['#10b981', '#3b82f6', '#f59e0b'],
                 ],
             ],
-            'labels' => ['Oliy', 'O\'rta maxsus', 'O\'rta'],
+            'labels' => ["Oliy $higher ta", "O'rta maxsus $secondarySpecial ta", "O'rta $secondary ta"],
         ];
     }
 

@@ -8,6 +8,9 @@ use App\Livewire\EmployeesGenderChartWidget;
 use App\Livewire\EmployeesCategoryChartWidget;
 use App\Livewire\CadastreAreaChartWidget;
 use Filament\Actions;
+use Filament\Actions\Action;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\EditAction;
 
 class ViewStation extends ViewRecord
 {
@@ -16,12 +19,18 @@ class ViewStation extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\EditAction::make()
+            EditAction::make()
                 ->label('Tahrirlash')
                 ->icon('heroicon-o-pencil'),
-            Actions\DeleteAction::make()
+            DeleteAction::make()
                 ->label('O\'chirish')
                 ->icon('heroicon-o-trash'),
+            Action::make('open_gps')
+                ->label("GPS ga o'tish")
+                ->icon('heroicon-o-map')
+                ->url("https://utysmpo.uzgps.uz/")
+                ->openUrlInNewTab()
+                ->visible(fn() => $this->record->id === 43),
         ];
     }
 

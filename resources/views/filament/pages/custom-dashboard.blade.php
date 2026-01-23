@@ -69,8 +69,8 @@
         
         .station-marker {
             position: absolute;
-            width: 48px;
-            height: 48px;
+            width: 30px;
+            height: 30px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -226,8 +226,8 @@
         }
 
         .station-marker.enterprise {
-            width: 24px !important;    /* oldingi 20 yoki 12 o'rniga 24 */
-            height: 24px !important;
+            width: 40px !important;
+            height: 40px !important;
         }
 
         .station-marker.enterprise img {
@@ -1026,6 +1026,7 @@
                 },
 
                 getStationIcon(type) {
+                    if(type == 'enterprise_rju') return '/storage/mtu-icon.png';
                     if (type?.startsWith('enterprise_')) {
                         return '/storage/enterprise-icon.png';
                     }

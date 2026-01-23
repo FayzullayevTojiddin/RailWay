@@ -13,6 +13,7 @@ use Filament\Support\Enums\Alignment;
 use Filament\Schemas\Schema;
 use Filament\Forms\Components\FileUpload;
 use App\Enums\StationType;
+use Filament\Schemas\Components\Actions;
 
 class StationForm
 {
@@ -185,10 +186,12 @@ class StationForm
                         ->directory('cadastres')
                         ->imageEditor()
                         ->imagePreviewHeight('250')
-                        ->maxSize(20480)
+                        ->maxSize(1024*50)
                         ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/jpg', 'image/webp'])
-                        ->helperText('Faqat 1 ta rasm. Maksimal hajm: 20MB')
-                        ->columnSpanFull(),
+                        ->helperText('Faqat 1 ta rasm. Maksimal hajm: 50MB')
+                        ->columnSpanFull()
+                        ->openable()
+                        ->downloadable()
                 ])
                 ->collapsible()
                 ->collapsed(false),

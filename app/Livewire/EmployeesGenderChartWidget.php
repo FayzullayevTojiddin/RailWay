@@ -42,7 +42,7 @@ class EmployeesGenderChartWidget extends ChartWidget
                     'backgroundColor' => ['#3b82f6', '#ec4899'],
                 ],
             ],
-            'labels' => ['Erkaklar', 'Ayollar'],
+            'labels' => ["Erkaklar $males ta", "Ayollar $females ta"],
         ];
     }
 
@@ -56,6 +56,16 @@ class EmployeesGenderChartWidget extends ChartWidget
         return [
             'maintainAspectRatio' => false,
             'responsive' => true,
+            'plugins' => [
+                'datalabels' => [
+                    'color' => '#ffffff',
+                    'font' => [
+                        'weight' => 'bold',
+                        'size' => 14,
+                    ],
+                    'formatter' => fn ($value) => $value,
+                ],
+            ],
         ];
     }
 }
