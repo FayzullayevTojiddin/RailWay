@@ -1132,7 +1132,7 @@
                                 this.currentText = response.response_text || '';
                                 this.currentImages = Array.isArray(response.images) ? response.images : [];
 
-                                if (this.currentImages > 0) {
+                                if (this.currentImages.length > 0) {
                                     this.showAiModal = true;
                                 }
 
