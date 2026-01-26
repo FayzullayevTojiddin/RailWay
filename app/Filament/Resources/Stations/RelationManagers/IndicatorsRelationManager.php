@@ -26,19 +26,35 @@ class IndicatorsRelationManager extends RelationManager
     public function form(Schema $schema): Schema
     {
         return $schema->components([
-            TextInput::make('title')
-                ->label("Ko'rsatkich nomi")
-                ->required()
-                ->maxLength(255),
-
             FileUpload::make('file')
                 ->label("Hujjat")
                 ->directory('economic-indicators')
-                ->downloadable(),
+                ->downloadable()
+                ->imagePreviewHeight('300')
+                ->panelAspectRatio('16:9')
+                ->panelLayout('integrated')
+
+                ->openable()
+
+                ->acceptedFileTypes([
+                        'image/*',
+                        'application/pdf',
+                        'application/msword',
+                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    ])
+                    
+                ->columnSpanFull(),
+
+            TextInput::make('title')
+                ->label("Ko'rsatkich nomi")
+                ->required()
+                ->maxLength(255)
+                ->columnSpanFull(),
 
             Textarea::make('description')
                 ->label("Tavsif")
-                ->rows(3),
+                ->rows(3)
+                ->columnSpanFull(),
         ]);
     }
 
