@@ -229,7 +229,6 @@ class ReportsRelationManager extends RelationManager
                         'xarajat_daromad' => '📊 Oylik xarajat va daromad',
                         'boshqalar' => '📋 Boshqalar',
                     ])
-                    ->default('yuk_ortilishi')
                     ->native(false),
 
                 SelectFilter::make('month')
@@ -241,7 +240,6 @@ class ReportsRelationManager extends RelationManager
                                   ->whereMonth('date', substr($data['value'], 5, 2));
                         }
                     })
-                    ->default(now()->format('Y-m'))
                     ->native(false),
             ])
             ->filtersLayout(\Filament\Tables\Enums\FiltersLayout::AboveContent)

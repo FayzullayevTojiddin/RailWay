@@ -50,4 +50,9 @@ class Station extends Model
     {
         return $this->hasMany(Locomotive::class);
     }
+
+    public function indicators(): HasMany
+    {
+        return $this->hasMany(EconomicIndicator::class);
+    }
 }

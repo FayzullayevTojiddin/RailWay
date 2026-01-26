@@ -18,6 +18,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use UnitEnum;
 use App\Filament\Resources\Stations\RelationManagers\CadastresRelationManager;
+use App\Filament\Resources\Stations\RelationManagers\IndicatorsRelationManager;
 use App\Filament\Resources\Stations\RelationManagers\ReportsRelationManager;
 use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Resources\Stations\RelationManagers\LocomotivesRelationManager;
@@ -78,6 +79,7 @@ class StationResource extends Resource
             CadastresRelationManager::class,
             ReportsRelationManager::class,
             LocomotivesRelationManager::class,
+            IndicatorsRelationManager::class
         ];
     }
 
