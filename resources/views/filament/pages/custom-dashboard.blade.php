@@ -621,6 +621,50 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
                 </svg>
             </button>
+            <div 
+                x-show="showAiModal"
+                x-transition.opacity
+                class="fixed inset-0 z-[2000] flex items-center justify-center"
+            >
+                <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+
+                <div class="relative bg-white rounded-2xl shadow-2xl w-[900px] h-[480px] flex overflow-hidden">
+                    <!-- LEFT -->
+                    <div class="w-1/2 bg-gray-100">
+                        <template x-if="currentImages.length">
+                            <img :src="currentImages[0]" class="w-full h-full object-cover">
+                        </template>
+                    </div>
+
+                    <!-- RIGHT -->
+                    <div class="w-1/2 p-6 flex flex-col justify-between">
+                        <div>
+                            <h2 class="text-xl font-bold mb-3">AI ma’lumoti</h2>
+                            <p x-text="currentText"></p>
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                            <span class="text-sm text-gray-500">AI gapiryapti…</span>
+                        </div>
+                    </div>
+
+                    <button 
+                        @click="stopAll(); showAiModal=false"
+                        class="absolute top-3 right-3 w-9 h-9 bg-gray-100 rounded-full"
+                    >✕</button>
+                </div>
+            </div>
+
+            <!-- 🎤 MICROPHONE BUTTON -->
+            <div class="fixed bottom-6 right-6 z-[1004]">
+                <button 
+                    @click="toggleVoice()"
+                    class="w-16 h-16 rounded-full text-white"
+                >
+                    🎤
+                </button>
+            </div>
         </div>
 
     </div>
@@ -1046,6 +1090,9 @@
                 mediaRecorder: null,
                 audioChunks: [],
                 audioElement: null,
+                currentImages: [],
+                currentText: '',
+                showAiModal: false,
                 
                 toggleVoice() {
                     if (this.isListening || this.isSpeaking) {
@@ -1085,27 +1132,33 @@
                         
                         this.mediaRecorder.onstop = async () => {
                             const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
-                            
+
                             try {
                                 const response = await this.sendAudioToBackend(audioBlob);
                                 this.isListening = false;
-                                
-                                if (response.success) {
-                                    const message = response.response || response.message || 'Javob yo\'q';
 
-                                    if (response.task_id) {
-                                        this.pollTtsStatus(response.task_id, message);
-                                    } else if (response.audio.remote_url) {
-                                        this.playAudio(response.audio.remote_url);
-                                    }
-                                } else {
-                                    this.isListening = false;
+                                if (!response || !response.success) {
+                                    return;
                                 }
+
+                                const text = response.response_text || '';
+                                const images = Array.isArray(response.images) ? response.images : [];
+
+                                if (images.length > 0) {
+                                    this.currentText = text;
+                                    this.currentImages = images;
+                                    this.showAiModal = true;
+                                }
+
+                                if (response.audio && response.audio.remote_url) {
+                                    this.playAudio(response.audio.remote_url);
+                                }
+
                             } catch (error) {
-                                this.isListening = false;
+                                console.error('Voice error:', error);
+                            } finally {
+                                stream.getTracks().forEach(track => track.stop());
                             }
-                            
-                            stream.getTracks().forEach(track => track.stop());
                         };
                         
                         this.mediaRecorder.start();
@@ -1185,16 +1238,19 @@
                 
                 playAudio(audioUrl) {
                     this.isSpeaking = true;
+                    this.showAiModal = true;
                     
                     this.audioElement = new Audio(audioUrl);
                     
                     this.audioElement.onended = () => {
                         this.isSpeaking = false;
+                        this.showAiModal = false;
                         this.audioElement = null;
                     };
                     
                     this.audioElement.onerror = () => {
                         this.isSpeaking = false;
+                        this.showAiModal = false;
                         this.audioElement = null;
                     };
                     
