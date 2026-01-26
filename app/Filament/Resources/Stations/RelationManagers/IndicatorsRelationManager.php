@@ -68,6 +68,10 @@ class IndicatorsRelationManager extends RelationManager
                     ->searchable()
                     ->sortable(),
 
+                TextColumn::make('description')
+                    ->label("Tavsif")
+                    ->limit(50),
+
                 TextColumn::make('created_at')
                     ->label("Yaratilgan sana")
                     ->dateTime('d.m.Y'),
