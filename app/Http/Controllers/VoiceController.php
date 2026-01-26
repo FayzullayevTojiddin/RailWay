@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Station;
+use Illuminate\Support\Facades\Log;
 use OpenAI\Laravel\Facades\OpenAI;
 
 class VoiceController extends Controller
@@ -28,15 +29,16 @@ class VoiceController extends Controller
             $audioHash = md5_file($audioFile->getRealPath());
             $transcribedText = $this->getCachedTranscription($audioHash, $audioFile);
             $intent = $this->detectEntity($transcribedText);
-            $responseText = $this->getResponse($intent);
-            $audioResult = $this->textToSpeech($responseText);
+            $responseData = $this->getResponse($intent);
+            $audioResult = $this->textToSpeech($responseData['text']);
             
             return response()->json([
                 'success' => true,
                 'transcribed_text' => $transcribedText,
                 'intent' => $intent,
-                'response_text' => $responseText,
-                'audio' => $audioResult
+                'response_text' => $responseData['text'],
+                'images' => $responseData['images'],
+                'audio' => $audioResult,
             ]);
             
         } catch (\Exception $e) {
@@ -59,7 +61,7 @@ class VoiceController extends Controller
             ])->post($endpoint, $payload);
 
             if (!$response->successful()) {
-                \Log::error('TTS failed', [
+                Log::error('TTS failed', [
                     'status' => $response->status(),
                     'body' => $response->body()
                 ]);
@@ -70,7 +72,7 @@ class VoiceController extends Controller
             $remoteUrl = $data['result']['url'] ?? null;
 
             if (!$remoteUrl) {
-                \Log::error('TTS response missing URL');
+                Log::error('TTS response missing URL');
                 return null;
             }
             
@@ -92,7 +94,7 @@ class VoiceController extends Controller
             }
         }
         catch (\Exception $e) {
-            \Log::error('TTS request exception', ['err' => $e->getMessage()]);
+            Log::error('TTS request exception', ['err' => $e->getMessage()]);
             return null;
         }
     }
@@ -194,25 +196,42 @@ PROMPT;
 }
 
 
-    private function getResponse(array $intent): string
+    private function getResponse(array $intent): array
     {
         if (empty($intent['title']) || empty($intent['id'])) {
-            return "Siz so'ragan korxona yoki stansiya haqida ma'lumot topilmadi.";
+            return [
+                'text' => "Siz so'ragan korxona yoki stansiya haqida ma'lumot topilmadi.",
+                'images' => []
+            ];
         }
 
-        return $this->getResponseWithID(
-            (int) $intent['id']
-        );
+        return $this->getResponseWithID((int) $intent['id']);
     }
 
-    private function getResponseWithID(int $id): string
+    private function getResponseWithID(int $id): array
     {
         try {
-            $data = Station::findOrFail($id);
-            $ai_response = $data->ai_response;
-            return $data->ai_response ?: "Hozircha ma'lumotlar mavjud emas";
-        } catch(Exception $error) {
-            return "Tizimda xatolik. Kechirasiz sizga hozir javob bera olmayman";
+            $station = Station::findOrFail($id);
+
+            $images = [];
+
+            if (is_array($station->images)) {
+                $images = collect($station->images)
+                    ->map(fn ($path) => Storage::url($path))
+                    ->values()
+                    ->toArray();
+            }
+
+            return [
+                'text' => $station->ai_response ?: "Hozircha ma'lumotlar mavjud emas",
+                'images' => $images
+            ];
+
+        } catch (Exception $e) {
+            return [
+                'text' => "Tizimda xatolik. Kechirasiz sizga hozir javob bera olmayman",
+                'images' => []
+            ];
         }
     }
 }

@@ -606,9 +606,7 @@
             </div>
         </div>
 
-        <!-- AI Voice Assistant -->
         <div x-data="voiceAssistant()" class="fixed bottom-6 right-6 z-[1004]">
-            <!-- Microphone Button -->
             <button 
                 @click="toggleVoice()"
                 class="w-16 h-16 rounded-full shadow-2xl flex items-center justify-center text-white transition-all duration-300"
@@ -696,7 +694,6 @@
                 },
 
                 addMarkersToRealMap() {
-                    // Oldingi markerlarni olib tashlash
                     Object.values(this.mapMarkers).forEach(m => {
                         try { this.realMap.removeLayer(m); } catch(e) {}
                     });
@@ -707,7 +704,6 @@
                             const iconUrl = this.getStationIcon(station.type);
                             const isEnterprise = station.type && station.type.startsWith('enterprise_');
 
-                            // REAL MAP uchun enterprise biroz kattaroq: 18px
                             const sizePx = isEnterprise ? 50 : 50;
                             const anchorX = Math.round(sizePx / 2);
                             const anchorY = sizePx;
@@ -724,7 +720,6 @@
                                 icon: customIcon
                             }).addTo(this.realMap);
 
-                            // DOM hosil bo'lgach qat'iy majburlash
                             setTimeout(() => {
                                 const el = marker.getElement();
                                 if (el) {
@@ -777,7 +772,6 @@
                         return;
                     }
 
-                    // Route 1 (diesel) — o'zgarmadi (agar kerak bo'lsa shu yerni ham tahrirlashingiz mumkin)
                     const route1Stations = [
                         'Quduqli',
                         'Sariosiyo',
@@ -791,7 +785,6 @@
                         .map(name => this.stations.findIndex(s => s.title === name))
                         .filter(idx => idx !== -1);
 
-                    // Route 2 (electric) — siz bergan tartibda
                     const route2Stations = [
                         'Oqnazar',
                         "Sho'rob",
@@ -812,7 +805,6 @@
                         .map(name => this.stations.findIndex(s => s.title === name))
                         .filter(idx => idx !== -1);
 
-                    // Route 3 (diesel) — aslida qoladi
                     const route3Stations = [
                         'Surxonobod',
                         'Boldir',
@@ -853,7 +845,7 @@
                             rotation: 0,
                             route: route,
                             currentRouteIndex: 0,
-                            direction: 1, // 1 = oldinga, -1 = orqaga
+                            direction: 1,
                             speed: 0.05 + (i * 0.01),
                             type: trainTypes[i]
                         });
@@ -886,30 +878,21 @@
                                 const distance = Math.sqrt(dx * dx + dy * dy);
                                 
                                 if (distance < 1) {
-                                    // Hozirga stansiyaga yetib bordi — keyingi indexni aniqlaymiz
                                     const nextIndex = train.currentRouteIndex + train.direction;
 
-                                    // Agar keyingi index marshrut tashqarisiga chiqsa — cheklovlarni qo'llaymiz (oxir/bosh)
                                     if (nextIndex >= train.route.length) {
-                                        // marshrut oxiriga yetdi — orqaga qayt
                                         train.currentRouteIndex = train.route.length - 2;
                                         train.direction = -1;
                                     } else if (nextIndex < 0) {
-                                        // marshrut boshiga yetdi — oldinga qayt
                                         train.currentRouteIndex = 1;
                                         train.direction = 1;
                                     } else {
-                                        // normal holatda indexni yangilaymiz
                                         train.currentRouteIndex = nextIndex;
                                     }
 
-                                    // --- MINIMAL JOY: agar elektr poyezd Oqnazar stansiyasiga yetgan bo'lsa, darhol orqaga o'girilsin ---
-                                    // nextStation ob'ektini aniqlab olamiz
                                     const arrivedStation = this.stations[ train.route[ train.currentRouteIndex ] ];
                                     if (train.type === 'electric' && arrivedStation && arrivedStation.title === 'Oqnazar') {
                                         train.direction = -1;
-                                        // agar xohlasangiz shu yerda train.currentRouteIndex ni ham moslab qo'yish mumkin,
-                                        // lekin yuqoridagi yo'l allaqachon indexni to'g'ri yangilaydi.
                                     }
 
                                 } else {
@@ -1075,7 +1058,6 @@
                 stopAll() {
                     this.isListening = false;
                     
-                    // Audio yozishni to'xtatish
                     if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
                         this.mediaRecorder.stop();
                     }
@@ -1092,7 +1074,6 @@
                     try {
                         this.isListening = true;
                         
-                        // Mikrofonga ruxsat so'rash
                         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                         
                         this.audioChunks = [];
@@ -1124,14 +1105,11 @@
                                 this.isListening = false;
                             }
                             
-                            // Stream to'xtatish
                             stream.getTracks().forEach(track => track.stop());
                         };
                         
-                        // Audio yozishni boshlash
                         this.mediaRecorder.start();
                         
-                        // 5 soniyadan keyin avtomatik to'xtatish
                         setTimeout(() => {
                             if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
                                 this.mediaRecorder.stop();
@@ -1182,18 +1160,15 @@
                             
                             const data = await response.json();
                             
-                            // SUCCESS bo'lganda
                             if (data.status === 'SUCCESS' && data.audio_url) {
                                 this.playAudio(data.audio_url);
                                 return;
                             }
                             
-                            // FAILED bo'lsa
                             if (data.status === 'FAILED' || data.status === 'ERROR') {
                                 return;
                             }
                             
-                            // Yana kutish
                             if (attempt < maxAttempts) {
                                 setTimeout(checkStatus, 1000);
                             }
@@ -1227,22 +1202,7 @@
                 },
                 
                 speakResponse(text) {
-                    // Google TTS o'chirildi - faqat UzbekVoice.ai ishlatiladi
                     this.isSpeaking = false;
-                    
-                    // ========== GOOGLE TTS (o'chirilgan) ==========
-                    // if ('speechSynthesis' in window) {
-                    //     this.isSpeaking = true;
-                    //     const utterance = new SpeechSynthesisUtterance(text);
-                    //     utterance.lang = 'uz-UZ';
-                    //     utterance.rate = 0.9;
-                    //     utterance.pitch = 1.0;
-                    //     utterance.volume = 1.0;
-                    //     utterance.onend = () => {
-                    //         this.isSpeaking = false;
-                    //     };
-                    //     window.speechSynthesis.speak(utterance);
-                    // }
                 }
             }
         }
