@@ -34,8 +34,7 @@ class IndicatorsRelationManager extends RelationManager
             FileUpload::make('file')
                 ->label("Hujjat")
                 ->directory('economic-indicators')
-                ->downloadable()
-                ->disk('public'),
+                ->downloadable(),
 
             Textarea::make('description')
                 ->label("Tavsif")
