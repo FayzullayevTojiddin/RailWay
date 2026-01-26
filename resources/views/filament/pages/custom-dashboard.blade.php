@@ -629,14 +629,12 @@
                 <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
 
                 <div class="relative bg-white rounded-2xl shadow-2xl w-[900px] h-[480px] flex overflow-hidden">
-                    <!-- LEFT -->
                     <div class="w-1/2 bg-gray-100">
                         <template x-if="currentImages.length">
                             <img :src="currentImages[0]" class="w-full h-full object-cover">
                         </template>
                     </div>
 
-                    <!-- RIGHT -->
                     <div class="w-1/2 p-6 flex flex-col justify-between">
                         <div>
                             <h2 class="text-xl font-bold mb-3">AI ma’lumoti</h2>
@@ -654,16 +652,6 @@
                         class="absolute top-3 right-3 w-9 h-9 bg-gray-100 rounded-full"
                     >✕</button>
                 </div>
-            </div>
-
-            <!-- 🎤 MICROPHONE BUTTON -->
-            <div class="fixed bottom-6 right-6 z-[1004]">
-                <button 
-                    @click="toggleVoice()"
-                    class="w-16 h-16 rounded-full text-white"
-                >
-                    🎤
-                </button>
             </div>
         </div>
 
@@ -1141,12 +1129,10 @@
                                     return;
                                 }
 
-                                const text = response.response_text || '';
-                                const images = Array.isArray(response.images) ? response.images : [];
+                                this.currentText = response.response_text || '';
+                                this.currentImages = Array.isArray(response.images) ? response.images : [];
 
-                                if (images.length > 0) {
-                                    this.currentText = text;
-                                    this.currentImages = images;
+                                if (this.currentImages > 0) {
                                     this.showAiModal = true;
                                 }
 
