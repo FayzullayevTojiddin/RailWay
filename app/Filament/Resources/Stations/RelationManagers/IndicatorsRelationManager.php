@@ -60,13 +60,6 @@ class IndicatorsRelationManager extends RelationManager
                 CreateAction::make()->label("Yangi iqtisodiy ko'rsatkich"),
             ])
             ->actions([
-                Action::make('viewFile')
-                    ->label('Ko‘rish')
-                    ->modalHeading(fn ($record) => $record->title)
-                    ->modalWidth('7xl')
-                    ->modalContent(fn ($record) => view('filament.actions.indicator-file-view', [
-                        'record' => $record,
-                    ])),
                 EditAction::make()
                     ->label("Tahrirlash")
                     ->button(),
