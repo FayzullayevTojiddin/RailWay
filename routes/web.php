@@ -10,7 +10,6 @@ Route::get('', function() {
 });
 
 Route::get('/station-images/{filename}', function ($filename) {
-    // Database dan to'liq yo'l keladi: stations/image.jpg
     $path = $filename;
     
     if (!Storage::disk('private')->exists($path)) {

@@ -624,7 +624,6 @@
     <script>
         function appData() {
             return {
-                // Map data
                 mapType: 'schematic',
                 selectedStation: null,
                 currentImageIndex: 0,
@@ -639,7 +638,6 @@
                 showSearchInput: false,
                 isFullscreen: false,
                 
-                // Voice Assistant data
                 isListening: false,
                 isSpeaking: false,
                 mediaRecorder: null,

@@ -7,30 +7,25 @@ use Illuminate\Http\Request;
 
 class MapController extends Controller
 {
-    /**
-     * Xarita sahifasini ko'rsatish
-     */
     public function index()
     {
-        // Barcha stansiyalarni olish
         $stations = Station::all()->map(function ($station) {
             return [
                 'id' => $station->id,
                 'title' => $station->title,
                 'type' => $station->type,
-                'coordinates' => $station->coordinates, // {x: 30, y: 70, latitude: 37.2242, longitude: 67.2783}
+                'coordinates' => $station->coordinates,
                 'description' => $station->description,
                 'images' => $station->images ?? [],
                 'details' => $station->details ?? []
             ];
         });
 
+        dd($stations);
+
         return view('map.index', compact('stations'));
     }
 
-    /**
-     * API - Stansiyalar ro'yxatini qaytarish
-     */
     public function getStations()
     {
         $stations = Station::all()->map(function ($station) {
@@ -48,9 +43,6 @@ class MapController extends Controller
         return response()->json($stations);
     }
 
-    /**
-     * Bitta stansiya ma'lumotlarini olish
-     */
     public function show($id)
     {
         $station = Station::findOrFail($id);
