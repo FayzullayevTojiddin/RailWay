@@ -630,9 +630,11 @@
 
                 <div class="relative bg-white rounded-2xl shadow-2xl w-[900px] h-[480px] flex overflow-hidden">
                     <div class="w-1/2 bg-gray-100">
-                        <template x-if="currentImages.length">
-                            <img :src="currentImages[0]" class="w-full h-full object-cover">
-                        </template>
+                        <img 
+                            x-show="currentImages.length > 0"
+                            :src="currentImages[0]"
+                            class="w-full h-full object-cover"
+                        />
                     </div>
 
                     <div class="w-1/2 p-6 flex flex-col justify-between">
@@ -1133,7 +1135,9 @@
                                 this.currentImages = Array.isArray(response.images) ? response.images : [];
 
                                 if (this.currentImages.length > 0) {
-                                    this.showAiModal = true;
+                                    this.$nextTick(() => {
+                                        this.showAiModal = true;
+                                    });
                                 }
 
                                 if (response.audio && response.audio.remote_url) {
@@ -1224,7 +1228,6 @@
                 
                 playAudio(audioUrl) {
                     this.isSpeaking = true;
-                    this.showAiModal = true;
                     
                     this.audioElement = new Audio(audioUrl);
                     
