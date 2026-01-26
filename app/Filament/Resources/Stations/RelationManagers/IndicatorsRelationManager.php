@@ -30,7 +30,7 @@ class IndicatorsRelationManager extends RelationManager
                 ->label("Hujjat")
                 ->directory('economic-indicators')
                 ->downloadable()
-                ->imagePreviewHeight('300')
+                ->imagePreviewHeight('600')
                 ->panelAspectRatio('16:9')
                 ->panelLayout('integrated')
 
