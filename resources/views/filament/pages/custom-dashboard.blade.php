@@ -1545,7 +1545,6 @@
                                     this.isProcessing = false;
                                 }
                             } catch (error) {
-                                console.error('Audio backend error:', error);
                                 this.isProcessing = false;
                             }
                             
@@ -1561,7 +1560,6 @@
                         }, 5000);
                         
                     } catch (error) {
-                        console.error('Microphone error:', error);
                         this.isListening = false;
                         this.isProcessing = false;
                         alert('Mikrofonga ruxsat berilmadi. Iltimos brauzer sozlamalarini tekshiring.');
@@ -1573,12 +1571,7 @@
                     
                     if (response.images && Array.isArray(response.images) && response.images.length > 0) {
                         this.currentStationImages = response.images;
-                        console.log('Loaded images from response:', this.currentStationImages);
-                        
-                        // Auto carousel ni boshlash
                         this.startCarousel();
-                    } else {
-                        console.log('No images in response');
                     }
                 },
                 
@@ -1629,7 +1622,6 @@
                         
                         return await response.json();
                     } catch (error) {
-                        console.error('Send audio error:', error);
                         throw error;
                     }
                 },
@@ -1655,7 +1647,6 @@
                             }
                             
                             if (data.status === 'FAILED' || data.status === 'ERROR') {
-                                console.error('TTS failed:', data);
                                 this.isProcessing = false;
                                 return;
                             }
@@ -1663,12 +1654,10 @@
                             if (attempt < maxAttempts) {
                                 setTimeout(checkStatus, 1000);
                             } else {
-                                console.error('TTS timeout');
                                 this.isProcessing = false;
                             }
                             
                         } catch (error) {
-                            console.error('Poll TTS error:', error);
                             if (attempt < maxAttempts) {
                                 setTimeout(checkStatus, 1000);
                             } else {
@@ -1687,14 +1676,11 @@
                     
                     this.audioElement = new Audio(audioUrl);
                     
-                    // Audio metadata yuklanganidan keyin word tracking ni boshlash
                     this.audioElement.onloadedmetadata = () => {
-                        console.log('Audio duration:', this.audioElement.duration);
+                        // Metadata yuklandi
                     };
                     
-                    // Audio boshlanganda word tracking ni boshlash
                     this.audioElement.onplay = () => {
-                        // Bir oz kutib, keyin startWordTracking ni chaqirish
                         setTimeout(() => {
                             this.startWordTracking();
                         }, 100);
@@ -1703,13 +1689,11 @@
                     this.audioElement.onended = () => {
                         this.isSpeaking = false;
                         
-                        // Word tracking intervalini to'xtatish
                         if (this.wordTrackingInterval) {
                             clearInterval(this.wordTrackingInterval);
                             this.wordTrackingInterval = null;
                         }
                         
-                        // Carousel intervalini to'xtatish
                         if (this.carouselInterval) {
                             clearInterval(this.carouselInterval);
                             this.carouselInterval = null;
@@ -1724,16 +1708,13 @@
                     };
                     
                     this.audioElement.onerror = () => {
-                        console.error('Audio play error');
                         this.isSpeaking = false;
                         
-                        // Word tracking intervalini to'xtatish
                         if (this.wordTrackingInterval) {
                             clearInterval(this.wordTrackingInterval);
                             this.wordTrackingInterval = null;
                         }
                         
-                        // Carousel intervalini to'xtatish
                         if (this.carouselInterval) {
                             clearInterval(this.carouselInterval);
                             this.carouselInterval = null;
@@ -1756,28 +1737,16 @@
                     const totalWords = this.getWords().length;
                     if (totalWords === 0) return;
                     
-                    // Audio davomiyligini olish
                     let duration = this.audioElement.duration;
                     
-                    // Agar duration hali tayyor bo'lmasa, taxminiy vaqtni hisoblash
                     if (!duration || duration === 0 || isNaN(duration) || !isFinite(duration)) {
-                        console.warn('Duration not available, using estimated time');
-                        // O'rtacha 2 so'z/soniya tezlikda (sekinroq)
                         duration = totalWords / 2;
                     }
                     
-                    console.log('Total words:', totalWords);
-                    console.log('Audio duration:', duration, 'seconds');
+                    const timePerWord = (duration * 1000 * 1.2) / totalWords;
                     
-                    // Har bir so'z uchun taxminiy vaqt (millisekundlarda)
-                    // 1.4x sekinroq qilish uchun duration ni ko'paytirish
-                    const timePerWord = (duration * 1000 * 1.4) / totalWords;
-                    console.log('Time per word:', timePerWord, 'ms');
-                    
-                    // Birinchi so'zni darhol highlight qilish
                     this.currentWordIndex = 0;
                     
-                    // Har bir so'zni ketma-ket highlight qilish
                     this.wordTrackingInterval = setInterval(() => {
                         if (this.currentWordIndex < totalWords - 1) {
                             this.currentWordIndex++;
