@@ -73,6 +73,7 @@ class IndicatorsRelationManager extends RelationManager
                 TextColumn::make('title')
                     ->label("Ko'rsatkich nomi")
                     ->searchable()
+                    ->limit(30)
                     ->sortable(),
 
                 TextColumn::make('description')
