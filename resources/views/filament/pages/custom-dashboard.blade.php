@@ -950,7 +950,7 @@
                     <template x-if="!showSuccess">
                         <div>
                             <div class="loading-spinner"></div>
-                            <h3 class="loading-text">AI javob tayyorlayapti...</h3>
+                            <h3 class="loading-text">Barchinoy javob tayyorlayapti...</h3>
                             <p class="loading-subtext">Iltimos kuting</p>
                             <div class="loading-dots">
                                 <span></span>
