@@ -7,7 +7,7 @@
         body, html {
             margin: 0;
             padding: 0;
-            overflow: hidden !important;
+            overflow: hidden;
             width: 100%;
             height: 100%;
             position: fixed;
@@ -80,13 +80,10 @@
             transform: translate(-50%, -50%);
         }
         
-        
         .station-marker:hover {
             transform: translate(-50%, -50%) scale(1.2);
         }
         
-        
-        /* Tanlangan marker animatsiyasi */
         .station-marker.station-selected {
             transform: translate(-50%, -50%) scale(1.3);
             z-index: 100;
@@ -125,26 +122,55 @@
         
         .train-animation {
             position: absolute;
-            width: 40px;
-            height: 40px;
+            width: 34px;
+            height: 34px;
             z-index: 5;
             pointer-events: none;
+            transform: translate(-50%, -50%);
         }
-        
+
         .train-body {
             width: 100%;
             height: 100%;
-            background: #10b981;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
+            overflow: hidden;
+            background: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
         }
-        
+
         .train-body img {
             width: 100%;
             height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .train-body.electric {
+            border: 2px solid rgba(16,185,129,0.4);
+        }
+
+        .train-body.diesel {
+            border: 2px solid rgba(245,158,11,0.4);
+        }
+
+        .station-marker.enterprise {
+            width: 40px;
+            height: 40px;
+        }
+
+        .station-marker.enterprise img {
+            width: 100%;
+            height: 100%;
             object-fit: contain;
+            display: block;
+        }
+
+        .station-marker.station-selected.enterprise {
+            transform: translate(-50%, -50%) scale(1.3);
+            z-index: 110;
         }
         
         .map-type-option {
@@ -185,65 +211,6 @@
             margin: 8px;
             min-width: 200px;
         }
-
-        .train-animation {
-            position: absolute;
-            width: 34px;      /* KICHIKLASHTIRILDI */
-            height: 34px;     /* KICHIKLASHTIRILDI */
-            z-index: 5;
-            pointer-events: none;
-            transform: translate(-50%, -50%);
-        }
-
-        /* Train container doira, overflow hidden bilan rasmni crop qiladi */
-        .train-body {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;   /* DOIRA */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;     /* rasmni doira ichida kesish uchun */
-            background: white;    /* rasm shaffof bo'lsa fallback */
-            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
-        }
-
-        /* Rasm doira ichida o'rtalanadi va to'liq to'ldiradi */
-        .train-body img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;    /* doirani to'liq to'ldirish uchun */
-            display: block;
-        }
-
-        /* Electric / Diesel uchun vizual farqlash (ixtiyoriy) */
-        .train-body.electric {
-            border: 2px solid rgba(16,185,129,0.14);
-        }
-
-        .train-body.diesel {
-            border: 2px solid rgba(245,158,11,0.14);
-        }
-
-        .station-marker.enterprise {
-            width: 40px !important;
-            height: 40px !important;
-        }
-
-        .station-marker.enterprise img {
-            width: 100% !important;
-            height: 100% !important;
-            object-fit: contain;
-            display: block;
-        }
-
-        /* Tanlangan enterprise markeriga biroz kattaroq effekt */
-        .station-marker.station-selected.enterprise {
-            transform: translate(-50%, -50%) scale(1.3);
-            z-index: 110;
-        }
-
-        
     </style>
 
     <div x-data="mapComponent()" x-init="init()" class="fixed inset-0 w-full h-screen overflow-hidden">
@@ -273,21 +240,14 @@
                                 </template>
                             </template>
                             
-                            <!-- Poyezdlar faqat schematic xaritada -->
                             <template x-if="mapType === 'schematic'">
                                 <template x-for="(train, index) in trains" :key="index">
                                     <div 
                                         class="train-animation"
-                                        :style="`left: ${train.x}%; top: ${train.y}%; transform: translate(-50%, -50%);`"
+                                        :style="`left: ${train.x}%; top: ${train.y}%;`"
                                     >
-                                        <!-- <div class="train-body">
-                                            <img :src="getTrainIcon(train.type)" :alt="train.type + ' train'" />
-                                        </div> -->
-                                        <div class="train-animation"
-                                            :style="`left: ${train.x}%; top: ${train.y}%; transform: translate(-50%, -50%);`">
-                                            <div class="train-body" :class="train.type">
-                                                <img :src="getTrainIcon(train.type)" :alt="train.type + ' train'"/>
-                                            </div>
+                                        <div class="train-body" :class="train.type">
+                                            <img :src="getTrainIcon(train.type)" :alt="train.type + ' train'"/>
                                         </div>
                                     </div>
                                 </template>
@@ -351,7 +311,6 @@
                         @focus="showSearchResults = true"
                         placeholder="Stantsiya qidirish..."
                         class="w-80 px-4 py-3 pr-10 bg-white rounded-lg shadow-lg border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder-gray-500 font-medium"
-                        x-ref="searchInput"
                     />
                     <button 
                         @click="showSearchInput = false; searchQuery = ''; showSearchResults = false;"
@@ -416,7 +375,6 @@
         >
             <template x-if="selectedStation">
                 <div class="flex flex-col h-full">
-                    <!-- Tepa qismi - Fixed -->
                     <div class="flex-shrink-0 relative">
                         <button
                             @click="closeStationDetails()"
@@ -427,106 +385,102 @@
                             </svg>
                         </button>
 
-                    <div class="relative bg-gray-200 h-64">
-                        <template x-if="selectedStation.images && selectedStation.images.length > 0">
-                            <div class="relative h-full">
-                                <img 
-                                    :src="selectedStation.images[currentImageIndex]" 
-                                    class="w-full h-full object-cover"
-                                    :alt="'Station image ' + (currentImageIndex + 1)"
-                                    x-on:error="$el.src = 'https://via.placeholder.com/800x400?text=Image+Not+Found'"
-                                />
-                                
-                                <!-- Prev tugma -->
-                                <button
-                                    @click="prevImage()"
-                                    class="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white rounded-full shadow-lg flex items-center justify-center transition-all"
-                                >
-                                    <svg class="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                                    </svg>
-                                </button>
-                                
-                                <!-- Next tugma -->
-                                <button
-                                    @click="nextImage()"
-                                    class="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white rounded-full shadow-lg flex items-center justify-center transition-all"
-                                >
-                                    <svg class="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                                    </svg>
-                                </button>
-                                
-                                <!-- Rasm counter -->
-                                <div class="absolute bottom-2 right-2 px-3 py-1 bg-black/60 text-white text-sm rounded-full">
-                                    <span x-text="(currentImageIndex + 1) + ' / ' + selectedStation.images.length"></span>
+                        <div class="relative bg-gray-200 h-64">
+                            <template x-if="selectedStation.images && selectedStation.images.length > 0">
+                                <div class="relative h-full">
+                                    <img 
+                                        :src="selectedStation.images[currentImageIndex]" 
+                                        class="w-full h-full object-cover"
+                                        :alt="'Station image ' + (currentImageIndex + 1)"
+                                        x-on:error="$el.src = 'https://via.placeholder.com/800x400?text=Image+Not+Found'"
+                                    />
+                                    
+                                    <button
+                                        @click="prevImage()"
+                                        class="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white rounded-full shadow-lg flex items-center justify-center transition-all"
+                                    >
+                                        <svg class="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                                        </svg>
+                                    </button>
+                                    
+                                    <button
+                                        @click="nextImage()"
+                                        class="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white rounded-full shadow-lg flex items-center justify-center transition-all"
+                                    >
+                                        <svg class="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                        </svg>
+                                    </button>
+                                    
+                                    <div class="absolute bottom-2 right-2 px-3 py-1 bg-black/60 text-white text-sm rounded-full">
+                                        <span x-text="(currentImageIndex + 1) + ' / ' + selectedStation.images.length"></span>
+                                    </div>
                                 </div>
-                            </div>
-                        </template>
-                        <template x-if="!selectedStation.images || selectedStation.images.length === 0">
-                            <div class="h-full flex items-center justify-center text-gray-400">
-                                <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                                </svg>
-                            </div>
-                        </template>
-                    </div>
-
-                    <div class="p-6">
-                        <h2 class="text-2xl font-bold text-gray-900 mb-2" x-text="selectedStation.title"></h2>
-                        
-                        <div class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium mb-4"
-                             :class="{
-                                'bg-blue-100 text-blue-700': selectedStation.type === 'station',
-                                'bg-purple-100 text-purple-700': selectedStation.type === 'terminal',
-                                'bg-green-100 text-green-700': selectedStation.type === 'junction',
-                                'bg-orange-100 text-orange-700': selectedStation.type === 'enterprise'
-                             }">
-                            <span x-text="getStationType(selectedStation.type)"></span>
+                            </template>
+                            <template x-if="!selectedStation.images || selectedStation.images.length === 0">
+                                <div class="h-full flex items-center justify-center text-gray-400">
+                                    <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                    </svg>
+                                </div>
+                            </template>
                         </div>
 
-                        <p class="text-gray-600 text-sm leading-relaxed mb-6" x-text="selectedStation.description"></p>
-
-                        <template x-if="selectedStation.details">
-                            <div class="grid grid-cols-2 gap-3 mb-6">
-                                <div class="bg-blue-50 rounded-lg p-3">
-                                    <div class="text-xs text-gray-500 mb-1">Xodimlar soni</div>
-                                    <div class="text-xl font-bold text-blue-600" x-text="selectedStation.details.employees"></div>
-                                </div>
-                                <div class="bg-green-50 rounded-lg p-3">
-                                    <div class="text-xs text-gray-500 mb-1">Umumiy maydoni</div>
-                                    <div class="text-xl font-bold text-green-600" x-text="selectedStation.details.area + ' m²'"></div>
-                                </div>
-                                <div class="bg-purple-50 rounded-lg p-3">
-                                    <div class="text-xs text-gray-500 mb-1">Shaxobcha yo'llari</div>
-                                    <div class="text-xl font-bold text-purple-600" x-text="selectedStation.details.branch_tracks"></div>
-                                </div>
+                        <div class="p-6">
+                            <h2 class="text-2xl font-bold text-gray-900 mb-2" x-text="selectedStation.title"></h2>
+                            
+                            <div class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium mb-4"
+                                 :class="{
+                                    'bg-blue-100 text-blue-700': selectedStation.type === 'station',
+                                    'bg-purple-100 text-purple-700': selectedStation.type === 'terminal',
+                                    'bg-green-100 text-green-700': selectedStation.type === 'junction',
+                                    'bg-orange-100 text-orange-700': selectedStation.type === 'enterprise'
+                                 }">
+                                <span x-text="getStationType(selectedStation.type)"></span>
                             </div>
-                        </template>
-                        
-                        <!-- 360 ko'rish tugmasi -->
-                        <button
-                            @click="open360View()"
-                            class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-medium py-3 rounded-lg transition-colors flex items-center justify-center gap-2 mb-3"
-                            :class="{ 'opacity-50 cursor-not-allowed': !selectedStation.details || !selectedStation.details['360_link'] }"
-                            :disabled="!selectedStation.details || !selectedStation.details['360_link']"
-                        >
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            <span>360° ko'rish</span>
-                        </button>
-                        
-                        <!-- Batafsil ma'lumot tugmasi -->
-                        <button
-                            @click="goToStationDetails()"
-                            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
-                        >
-                            <span>Batafsil ma'lumot</span>
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                            </svg>
-                        </button>
+
+                            <p class="text-gray-600 text-sm leading-relaxed mb-6" x-text="selectedStation.description"></p>
+
+                            <template x-if="selectedStation.details">
+                                <div class="grid grid-cols-2 gap-3 mb-6">
+                                    <div class="bg-blue-50 rounded-lg p-3">
+                                        <div class="text-xs text-gray-500 mb-1">Xodimlar soni</div>
+                                        <div class="text-xl font-bold text-blue-600" x-text="selectedStation.details.employees"></div>
+                                    </div>
+                                    <div class="bg-green-50 rounded-lg p-3">
+                                        <div class="text-xs text-gray-500 mb-1">Umumiy maydoni</div>
+                                        <div class="text-xl font-bold text-green-600" x-text="selectedStation.details.area + ' m²'"></div>
+                                    </div>
+                                    <div class="bg-purple-50 rounded-lg p-3">
+                                        <div class="text-xs text-gray-500 mb-1">Shaxobcha yo'llari</div>
+                                        <div class="text-xl font-bold text-purple-600" x-text="selectedStation.details.branch_tracks"></div>
+                                    </div>
+                                </div>
+                            </template>
+                            
+                            <button
+                                @click="open360View()"
+                                class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-medium py-3 rounded-lg transition-colors flex items-center justify-center gap-2 mb-3"
+                                :class="{ 'opacity-50 cursor-not-allowed': !selectedStation.details || !selectedStation.details['360_link'] }"
+                                :disabled="!selectedStation.details || !selectedStation.details['360_link']"
+                            >
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <span>360° ko'rish</span>
+                            </button>
+                            
+                            <button
+                                @click="goToStationDetails()"
+                                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
+                            >
+                                <span>Batafsil ma'lumot</span>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </template>
@@ -606,9 +560,7 @@
             </div>
         </div>
 
-        <!-- AI Voice Assistant -->
         <div x-data="voiceAssistant()" class="fixed bottom-6 right-6 z-[1004]">
-            <!-- Microphone Button -->
             <button 
                 @click="toggleVoice()"
                 class="w-16 h-16 rounded-full shadow-2xl flex items-center justify-center text-white transition-all duration-300"
@@ -674,9 +626,7 @@
                 
                 initRealMap() {
                     try {
-                        if (this.realMap) {
-                            return;
-                        }
+                        if (this.realMap) return;
                         
                         this.realMap = L.map('real-map', {
                             center: [41.2995, 69.2401],
@@ -684,19 +634,16 @@
                             zoomControl: true
                         });
 
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                        attribution: '© OpenStreetMap contributors',
-                        maxZoom: 19
-                    }).addTo(this.realMap);
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '© OpenStreetMap contributors',
+                            maxZoom: 19
+                        }).addTo(this.realMap);
 
                         this.addMarkersToRealMap();
-                    } catch (error) {
-                        
-                    }
+                    } catch (error) {}
                 },
 
                 addMarkersToRealMap() {
-                    // Oldingi markerlarni olib tashlash
                     Object.values(this.mapMarkers).forEach(m => {
                         try { this.realMap.removeLayer(m); } catch(e) {}
                     });
@@ -706,8 +653,7 @@
                         if (station.location && station.location.lat && station.location.lng) {
                             const iconUrl = this.getStationIcon(station.type);
                             const isEnterprise = station.type && station.type.startsWith('enterprise_');
-
-                            const sizePx = isEnterprise ? 50 : 50;
+                            const sizePx = 50;
                             const anchorX = Math.round(sizePx / 2);
                             const anchorY = sizePx;
 
@@ -770,58 +716,16 @@
 
                 initTrains() {
                     this.trains = [];
+                    if (!this.stations || this.stations.length < 5) return;
 
-                    if (!this.stations || this.stations.length < 5) {
-                        return;
-                    }
+                    const route1Stations = ['Quduqli', 'Sariosiyo', 'Denov', 'Xayrabod', "Sho'rchi", 'Elbayon', "Qumqo'rg'on"];
+                    const route1 = route1Stations.map(name => this.stations.findIndex(s => s.title === name)).filter(idx => idx !== -1);
 
-                    // Route 1 (diesel) — o'zgarmadi (agar kerak bo'lsa shu yerni ham tahrirlashingiz mumkin)
-                    const route1Stations = [
-                        'Quduqli',
-                        'Sariosiyo',
-                        'Denov',
-                        'Xayrabod',
-                        "Sho'rchi",
-                        'Elbayon',
-                        "Qumqo'rg'on"
-                    ];
-                    const route1 = route1Stations
-                        .map(name => this.stations.findIndex(s => s.title === name))
-                        .filter(idx => idx !== -1);
+                    const route2Stations = ['Oqnazar', "Sho'rob", 'PCH-15', 'Darband', 'Boysun', 'Pulhakim', 'Tangimush', 'Oqjar', "Qumqo'rg'on", 'Surxon', 'Zartepa', "Jarqo'rg'on", 'Baktriya', 'Termiz'];
+                    const route2 = route2Stations.map(name => this.stations.findIndex(s => s.title === name)).filter(idx => idx !== -1);
 
-                    // Route 2 (electric) — siz bergan tartibda
-                    const route2Stations = [
-                        'Oqnazar',
-                        "Sho'rob",
-                        'PCH-15',
-                        'Darband',
-                        'Boysun',
-                        'Pulhakim',
-                        'Tangimush',
-                        'Oqjar',
-                        "Qumqo'rg'on",
-                        'Surxon',
-                        'Zartepa',
-                        "Jarqo'rg'on",
-                        'Baktriya',
-                        'Termiz'
-                    ];
-                    const route2 = route2Stations
-                        .map(name => this.stations.findIndex(s => s.title === name))
-                        .filter(idx => idx !== -1);
-
-                    // Route 3 (diesel) — aslida qoladi
-                    const route3Stations = [
-                        'Surxonobod',
-                        'Boldir',
-                        'Sherabod',
-                        'Naushaxar',
-                        'Uchqizil',
-                        'Termiz'
-                    ];
-                    const route3 = route3Stations
-                        .map(name => this.stations.findIndex(s => s.title === name))
-                        .filter(idx => idx !== -1);
+                    const route3Stations = ['Surxonobod', 'Boldir', 'Sherabod', 'Naushaxar', 'Uchqizil', 'Termiz'];
+                    const route3 = route3Stations.map(name => this.stations.findIndex(s => s.title === name)).filter(idx => idx !== -1);
 
                     const routes = [];
                     const trainTypes = [];
@@ -851,7 +755,7 @@
                             rotation: 0,
                             route: route,
                             currentRouteIndex: 0,
-                            direction: 1, // 1 = oldinga, -1 = orqaga
+                            direction: 1,
                             speed: 0.05 + (i * 0.01),
                             type: trainTypes[i]
                         });
@@ -859,12 +763,10 @@
                 },
                 
                 getTrainIcon(type) {
-                    
                     const icons = {
                         'electric': '/storage/train-electric.png',
                         'diesel': '/storage/train-diesel.png'
                     };
-                    
                     return icons[type] || '/storage/train-icon.png';
                 },
 
@@ -875,41 +777,29 @@
                                 const targetStationIndex = train.route[train.currentRouteIndex];
                                 const targetStation = this.stations[targetStationIndex];
                                 
-                                if (!targetStation || !targetStation.coordinates) {
-                                    return;
-                                }
+                                if (!targetStation || !targetStation.coordinates) return;
                                 
                                 const dx = targetStation.coordinates.x - train.x;
                                 const dy = targetStation.coordinates.y - train.y;
                                 const distance = Math.sqrt(dx * dx + dy * dy);
                                 
                                 if (distance < 1) {
-                                    // Hozirga stansiyaga yetib bordi — keyingi indexni aniqlaymiz
                                     const nextIndex = train.currentRouteIndex + train.direction;
 
-                                    // Agar keyingi index marshrut tashqarisiga chiqsa — cheklovlarni qo'llaymiz (oxir/bosh)
                                     if (nextIndex >= train.route.length) {
-                                        // marshrut oxiriga yetdi — orqaga qayt
                                         train.currentRouteIndex = train.route.length - 2;
                                         train.direction = -1;
                                     } else if (nextIndex < 0) {
-                                        // marshrut boshiga yetdi — oldinga qayt
                                         train.currentRouteIndex = 1;
                                         train.direction = 1;
                                     } else {
-                                        // normal holatda indexni yangilaymiz
                                         train.currentRouteIndex = nextIndex;
                                     }
 
-                                    // --- MINIMAL JOY: agar elektr poyezd Oqnazar stansiyasiga yetgan bo'lsa, darhol orqaga o'girilsin ---
-                                    // nextStation ob'ektini aniqlab olamiz
-                                    const arrivedStation = this.stations[ train.route[ train.currentRouteIndex ] ];
+                                    const arrivedStation = this.stations[train.route[train.currentRouteIndex]];
                                     if (train.type === 'electric' && arrivedStation && arrivedStation.title === 'Oqnazar') {
                                         train.direction = -1;
-                                        // agar xohlasangiz shu yerda train.currentRouteIndex ni ham moslab qo'yish mumkin,
-                                        // lekin yuqoridagi yo'l allaqachon indexni to'g'ri yangilaydi.
                                     }
-
                                 } else {
                                     train.x += (dx / distance) * train.speed;
                                     train.y += (dy / distance) * train.speed;
@@ -932,15 +822,6 @@
                             this.realMap.invalidateSize();
                         }, 300);
                     }
-                },
-
-                getMapTypeName(type) {
-                    const names = {
-                        'schematic': 'Sxematik',
-                        'simple': 'Oddiy',
-                        'real': 'Real xarita'
-                    };
-                    return names[type] || 'Sxematik';
                 },
                 
                 handleSearch() {
@@ -1024,7 +905,7 @@
                 },
 
                 getStationIcon(type) {
-                    if(type == 'enterprise_rju') return '/storage/mtu-icon.png';
+                    if (type == 'enterprise_rju') return '/storage/mtu-icon.png';
                     if (type?.startsWith('enterprise_')) {
                         return '/storage/enterprise-icon.png';
                     }
@@ -1046,10 +927,6 @@
                     if (this.selectedStation && this.selectedStation.details && this.selectedStation.details['360_link']) {
                         window.open(this.selectedStation.details['360_link'], '_blank');
                     }
-                },
-
-                openImageViewer(index) {
-                    this.currentImageIndex = index;
                 }
             }
         }
@@ -1073,7 +950,6 @@
                 stopAll() {
                     this.isListening = false;
                     
-                    // Audio yozishni to'xtatish
                     if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
                         this.mediaRecorder.stop();
                     }
@@ -1090,7 +966,6 @@
                     try {
                         this.isListening = true;
                         
-                        // Mikrofonga ruxsat so'rash
                         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                         
                         this.audioChunks = [];
@@ -1122,14 +997,11 @@
                                 this.isListening = false;
                             }
                             
-                            // Stream to'xtatish
                             stream.getTracks().forEach(track => track.stop());
                         };
                         
-                        // Audio yozishni boshlash
                         this.mediaRecorder.start();
                         
-                        // 5 soniyadan keyin avtomatik to'xtatish
                         setTimeout(() => {
                             if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
                                 this.mediaRecorder.stop();
@@ -1180,18 +1052,15 @@
                             
                             const data = await response.json();
                             
-                            // SUCCESS bo'lganda
                             if (data.status === 'SUCCESS' && data.audio_url) {
                                 this.playAudio(data.audio_url);
                                 return;
                             }
                             
-                            // FAILED bo'lsa
                             if (data.status === 'FAILED' || data.status === 'ERROR') {
                                 return;
                             }
                             
-                            // Yana kutish
                             if (attempt < maxAttempts) {
                                 setTimeout(checkStatus, 1000);
                             }
@@ -1222,25 +1091,6 @@
                     };
                     
                     this.audioElement.play();
-                },
-                
-                speakResponse(text) {
-                    // Google TTS o'chirildi - faqat UzbekVoice.ai ishlatiladi
-                    this.isSpeaking = false;
-                    
-                    // ========== GOOGLE TTS (o'chirilgan) ==========
-                    // if ('speechSynthesis' in window) {
-                    //     this.isSpeaking = true;
-                    //     const utterance = new SpeechSynthesisUtterance(text);
-                    //     utterance.lang = 'uz-UZ';
-                    //     utterance.rate = 0.9;
-                    //     utterance.pitch = 1.0;
-                    //     utterance.volume = 1.0;
-                    //     utterance.onend = () => {
-                    //         this.isSpeaking = false;
-                    //     };
-                    //     window.speechSynthesis.speak(utterance);
-                    // }
                 }
             }
         }
