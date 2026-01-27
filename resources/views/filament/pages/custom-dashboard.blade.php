@@ -477,11 +477,11 @@
             }
         }
 
-        /* Success Animation */
+        /* Success Animation - Yangilangan */
         .success-animation {
-            width: 100px;
-            height: 100px;
-            margin: 0 auto 20px;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 30px;
             position: relative;
             animation: scale-up 0.5s ease-out;
         }
@@ -497,53 +497,81 @@
             }
         }
 
-        .success-checkmark {
-            width: 100px;
-            height: 100px;
+        .success-circle {
+            width: 120px;
+            height: 120px;
             border-radius: 50%;
-            display: block;
-            stroke-width: 3;
-            stroke: #10b981;
-            stroke-miterlimit: 10;
-            box-shadow: inset 0px 0px 0px #10b981;
-            animation: fill-success 0.4s ease-in-out 0.4s forwards, scale 0.3s ease-in-out 0.9s both;
+            background: #10b981;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+            animation: pulse-circle 1.5s ease-out;
         }
 
-        .success-checkmark-circle {
-            stroke-dasharray: 166;
-            stroke-dashoffset: 166;
-            stroke-width: 3;
-            stroke-miterlimit: 10;
-            stroke: #10b981;
-            fill: none;
-            animation: stroke-success 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
-        }
-
-        .success-checkmark-check {
-            transform-origin: 50% 50%;
-            stroke-dasharray: 48;
-            stroke-dashoffset: 48;
-            animation: stroke-success 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
-        }
-
-        @keyframes stroke-success {
+        @keyframes pulse-circle {
+            0% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 30px rgba(16, 185, 129, 0);
+            }
             100% {
-                stroke-dashoffset: 0;
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
             }
         }
 
-        @keyframes fill-success {
-            100% {
-                box-shadow: inset 0px 0px 0px 30px #10b981;
+        .success-checkmark {
+            width: 60px;
+            height: 60px;
+            position: relative;
+        }
+
+        .checkmark-stem {
+            position: absolute;
+            width: 6px;
+            height: 30px;
+            background: white;
+            left: 32px;
+            top: 18px;
+            border-radius: 3px;
+            transform-origin: bottom;
+            transform: rotate(45deg) scaleY(0);
+            animation: draw-stem 0.3s ease-out 0.6s forwards;
+        }
+
+        .checkmark-kick {
+            position: absolute;
+            width: 18px;
+            height: 6px;
+            background: white;
+            left: 18px;
+            top: 40px;
+            border-radius: 3px;
+            transform-origin: right;
+            transform: rotate(-45deg) scaleX(0);
+            animation: draw-kick 0.3s ease-out 0.4s forwards;
+        }
+
+        @keyframes draw-stem {
+            to {
+                transform: rotate(45deg) scaleY(1);
+            }
+        }
+
+        @keyframes draw-kick {
+            to {
+                transform: rotate(-45deg) scaleX(1);
             }
         }
 
         .success-text {
-            font-size: 24px;
-            font-weight: 600;
+            font-size: 28px;
+            font-weight: 700;
             color: #10b981;
             margin-top: 20px;
-            animation: fade-in 0.5s ease-out 1s both;
+            animation: fade-in 0.5s ease-out 0.9s both;
         }
 
         @keyframes fade-in {
@@ -905,7 +933,7 @@
             </div>
         </div>
 
-        <!-- Loading Animation -->
+        <!-- Voice Assistant -->
         <div x-data="voiceAssistant()" class="fixed bottom-6 right-6 z-[1004]">
             <div class="loading-backdrop" :class="{ 'active': isProcessing }">
                 <div class="loading-container">
@@ -928,10 +956,12 @@
                     <template x-if="showSuccess">
                         <div>
                             <div class="success-animation">
-                                <svg class="success-checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
-                                    <circle class="success-checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
-                                    <path class="success-checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
-                                </svg>
+                                <div class="success-circle">
+                                    <div class="success-checkmark">
+                                        <div class="checkmark-kick"></div>
+                                        <div class="checkmark-stem"></div>
+                                    </div>
+                                </div>
                             </div>
                             <h3 class="success-text">Tayyor!</h3>
                         </div>
@@ -1398,6 +1428,7 @@
                 currentResponse: null,
                 currentImageIndex: 0,
                 currentStationImages: [],
+                carouselInterval: null,
                 
                 toggleVoice() {
                     if (this.isListening || this.isSpeaking) {
@@ -1411,6 +1442,12 @@
                     this.isListening = false;
                     this.isProcessing = false;
                     this.showSuccess = false;
+                    
+                    // Carousel intervalini to'xtatish
+                    if (this.carouselInterval) {
+                        clearInterval(this.carouselInterval);
+                        this.carouselInterval = null;
+                    }
                     
                     if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
                         this.mediaRecorder.stop();
@@ -1454,7 +1491,6 @@
                                     this.currentResponse = response;
                                     this.currentImageIndex = 0;
                                     
-                                    // Rasmlarni sidebar paneldagi kabi to'g'ridan-to'g'ri olish
                                     this.loadStationImages(response);
 
                                     if (response.audio && response.audio.remote_url) {
@@ -1494,12 +1530,32 @@
                 loadStationImages(response) {
                     this.currentStationImages = [];
                     
-                    // Backend javobidan to'g'ridan-to'g'ri images arrayni olish
                     if (response.images && Array.isArray(response.images) && response.images.length > 0) {
                         this.currentStationImages = response.images;
                         console.log('Loaded images from response:', this.currentStationImages);
+                        
+                        // Auto carousel ni boshlash
+                        this.startCarousel();
                     } else {
                         console.log('No images in response');
+                    }
+                },
+                
+                // Yangi metod - auto carousel
+                startCarousel() {
+                    // Oldingi intervalni tozalash
+                    if (this.carouselInterval) {
+                        clearInterval(this.carouselInterval);
+                    }
+                    
+                    // Faqat 2 va undan ko'p rasm bo'lganda ishga tushadi
+                    if (this.currentStationImages.length > 1) {
+                        this.carouselInterval = setInterval(() => {
+                            // Faqat ovoz chiqayotganda carousel ishlaydi
+                            if (this.isSpeaking && this.currentStationImages.length > 0) {
+                                this.nextModalImage();
+                            }
+                        }, 3000); // Har 3 sekundda
                     }
                 },
                 
@@ -1590,6 +1646,13 @@
                     
                     this.audioElement.onended = () => {
                         this.isSpeaking = false;
+                        
+                        // Carousel intervalini to'xtatish
+                        if (this.carouselInterval) {
+                            clearInterval(this.carouselInterval);
+                            this.carouselInterval = null;
+                        }
+                        
                         this.currentResponse = null;
                         this.currentImageIndex = 0;
                         this.currentStationImages = [];
@@ -1599,6 +1662,13 @@
                     this.audioElement.onerror = () => {
                         console.error('Audio play error');
                         this.isSpeaking = false;
+                        
+                        // Carousel intervalini to'xtatish
+                        if (this.carouselInterval) {
+                            clearInterval(this.carouselInterval);
+                            this.carouselInterval = null;
+                        }
+                        
                         this.currentResponse = null;
                         this.currentImageIndex = 0;
                         this.currentStationImages = [];
@@ -1628,6 +1698,6 @@
                     }
                 }
             }
-            }
+        }
     </script>
 </div>
