@@ -523,35 +523,35 @@
         }
 
         .success-checkmark {
-            width: 60px;
-            height: 60px;
+            width: 70px;
+            height: 70px;
             position: relative;
         }
 
         .checkmark-stem {
             position: absolute;
-            width: 6px;
-            height: 30px;
+            width: 8px;
+            height: 40px;
             background: white;
-            left: 32px;
-            top: 18px;
-            border-radius: 3px;
-            transform-origin: bottom;
+            left: 35px;
+            top: 15px;
+            border-radius: 4px;
+            transform-origin: bottom left;
             transform: rotate(45deg) scaleY(0);
-            animation: draw-stem 0.3s ease-out 0.6s forwards;
+            animation: draw-stem 0.4s ease-out 0.5s forwards;
         }
 
         .checkmark-kick {
             position: absolute;
-            width: 18px;
-            height: 6px;
+            width: 22px;
+            height: 8px;
             background: white;
-            left: 18px;
-            top: 40px;
-            border-radius: 3px;
-            transform-origin: right;
+            left: 15px;
+            top: 43px;
+            border-radius: 4px;
+            transform-origin: left bottom;
             transform: rotate(-45deg) scaleX(0);
-            animation: draw-kick 0.3s ease-out 0.4s forwards;
+            animation: draw-kick 0.3s ease-out 0.3s forwards;
         }
 
         @keyframes draw-stem {
