@@ -212,21 +212,20 @@ PROMPT;
     {
         try {
             $station = Station::findOrFail($id);
-
             $images = [];
-
             if (is_array($station->images)) {
                 $images = collect($station->images)
-                    ->map(fn ($path) => Storage::url($path))
+                    ->map(function ($path) {
+                        $filename = basename($path);
+                        return '/station-images/stations/' . $filename;
+                    })
                     ->values()
                     ->toArray();
             }
-
             return [
                 'text' => $station->ai_response ?: "Hozircha ma'lumotlar mavjud emas",
                 'images' => $images
             ];
-
         } catch (Exception $e) {
             return [
                 'text' => "Tizimda xatolik. Kechirasiz sizga hozir javob bera olmayman",
