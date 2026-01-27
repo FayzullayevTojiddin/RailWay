@@ -476,6 +476,86 @@
                 transform: translateX(200%);
             }
         }
+
+        /* Success Animation */
+        .success-animation {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 20px;
+            position: relative;
+            animation: scale-up 0.5s ease-out;
+        }
+
+        @keyframes scale-up {
+            from {
+                transform: scale(0);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .success-checkmark {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            display: block;
+            stroke-width: 3;
+            stroke: #10b981;
+            stroke-miterlimit: 10;
+            box-shadow: inset 0px 0px 0px #10b981;
+            animation: fill-success 0.4s ease-in-out 0.4s forwards, scale 0.3s ease-in-out 0.9s both;
+        }
+
+        .success-checkmark-circle {
+            stroke-dasharray: 166;
+            stroke-dashoffset: 166;
+            stroke-width: 3;
+            stroke-miterlimit: 10;
+            stroke: #10b981;
+            fill: none;
+            animation: stroke-success 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+        }
+
+        .success-checkmark-check {
+            transform-origin: 50% 50%;
+            stroke-dasharray: 48;
+            stroke-dashoffset: 48;
+            animation: stroke-success 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+        }
+
+        @keyframes stroke-success {
+            100% {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        @keyframes fill-success {
+            100% {
+                box-shadow: inset 0px 0px 0px 30px #10b981;
+            }
+        }
+
+        .success-text {
+            font-size: 24px;
+            font-weight: 600;
+            color: #10b981;
+            margin-top: 20px;
+            animation: fade-in 0.5s ease-out 1s both;
+        }
+
+        @keyframes fade-in {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
     </style>
 
     <div x-data="mapComponent()" x-init="init()" class="fixed inset-0 w-full h-screen overflow-hidden">
@@ -829,17 +909,33 @@
         <div x-data="voiceAssistant()" class="fixed bottom-6 right-6 z-[1004]">
             <div class="loading-backdrop" :class="{ 'active': isProcessing }">
                 <div class="loading-container">
-                    <div class="loading-spinner"></div>
-                    <h3 class="loading-text">Barchinoy javob tayyorlayapti...</h3>
-                    <p class="loading-subtext">Iltimos kuting</p>
-                    <div class="loading-dots">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </div>
-                    <div class="loading-progress">
-                        <div class="loading-progress-bar"></div>
-                    </div>
+                    <template x-if="!showSuccess">
+                        <div>
+                            <div class="loading-spinner"></div>
+                            <h3 class="loading-text">AI javob tayyorlayapti...</h3>
+                            <p class="loading-subtext">Iltimos kuting</p>
+                            <div class="loading-dots">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                            <div class="loading-progress">
+                                <div class="loading-progress-bar"></div>
+                            </div>
+                        </div>
+                    </template>
+                    
+                    <template x-if="showSuccess">
+                        <div>
+                            <div class="success-animation">
+                                <svg class="success-checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                                    <circle class="success-checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+                                    <path class="success-checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+                                </svg>
+                            </div>
+                            <h3 class="success-text">Tayyor!</h3>
+                        </div>
+                    </template>
                 </div>
             </div>
 
@@ -861,11 +957,11 @@
             <div class="voice-backdrop" :class="{ 'active': isSpeaking }">
                 <div class="voice-modal" @click.stop>
                     <div class="voice-modal-images">
-                        <template x-if="currentResponse && currentResponse.images && currentResponse.images.length > 0">
+                        <template x-if="currentResponse && currentStationImages && currentStationImages.length > 0">
                             <div class="relative w-full h-full">
-                                <img :src="currentResponse.images[currentImageIndex]" alt="Station Image" class="w-full h-full object-cover">
+                                <img :src="currentStationImages[currentImageIndex]" alt="Station Image" class="w-full h-full object-cover">
                                 
-                                <template x-if="currentResponse.images.length > 1">
+                                <template x-if="currentStationImages.length > 1">
                                     <div>
                                         <button @click="prevModalImage()" class="image-nav-btn prev">
                                             <svg class="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -880,14 +976,14 @@
                                         </button>
 
                                         <div class="image-counter">
-                                            <span x-text="(currentImageIndex + 1) + ' / ' + currentResponse.images.length"></span>
+                                            <span x-text="(currentImageIndex + 1) + ' / ' + currentStationImages.length"></span>
                                         </div>
                                     </div>
                                 </template>
                             </div>
                         </template>
                         
-                        <template x-if="!currentResponse || !currentResponse.images || currentResponse.images.length === 0">
+                        <template x-if="!currentResponse || !currentStationImages || currentStationImages.length === 0">
                             <div class="flex items-center justify-center w-full h-full">
                                 <svg class="w-24 h-24 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
@@ -971,6 +1067,8 @@
                     document.addEventListener('fullscreenchange', () => {
                         this.isFullscreen = !!document.fullscreenElement;
                     });
+
+                    window.mapStations = this.stations;
                 },
                 
                 toggleFullscreen() {
@@ -1293,11 +1391,13 @@
                 isListening: false,
                 isSpeaking: false,
                 isProcessing: false,
+                showSuccess: false,
                 mediaRecorder: null,
                 audioChunks: [],
                 audioElement: null,
                 currentResponse: null,
                 currentImageIndex: 0,
+                currentStationImages: [],
                 
                 toggleVoice() {
                     if (this.isListening || this.isSpeaking) {
@@ -1310,6 +1410,7 @@
                 stopAll() {
                     this.isListening = false;
                     this.isProcessing = false;
+                    this.showSuccess = false;
                     
                     if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
                         this.mediaRecorder.stop();
@@ -1323,6 +1424,7 @@
                     this.isSpeaking = false;
                     this.currentResponse = null;
                     this.currentImageIndex = 0;
+                    this.currentStationImages = [];
                 },
                 
                 async startListening() {
@@ -1343,19 +1445,23 @@
                             
                             this.isListening = false;
                             this.isProcessing = true;
+                            this.showSuccess = false;
                             
                             try {
                                 const response = await this.sendAudioToBackend(audioBlob);
-                                this.isProcessing = false;
                                 
                                 if (response.success) {
                                     this.currentResponse = response;
                                     this.currentImageIndex = 0;
+                                    
+                                    this.loadStationImages(response);
 
                                     if (response.audio && response.audio.remote_url) {
-                                        this.playAudio(response.audio.remote_url);
+                                        this.showSuccessAndPlay(response.audio.remote_url);
                                     } else if (response.task_id) {
                                         this.pollTtsStatus(response.task_id);
+                                    } else {
+                                        this.isProcessing = false;
                                     }
                                 } else {
                                     this.isProcessing = false;
@@ -1380,6 +1486,27 @@
                         this.isProcessing = false;
                         alert('Mikrofonga ruxsat berilmadi. Iltimos brauzer sozlamalarini tekshiring.');
                     }
+                },
+
+                loadStationImages(response) {
+                    this.currentStationImages = [];
+                    
+                    if (response.intent && response.intent.station_id && window.mapStations) {
+                        const station = window.mapStations.find(s => s.id === response.intent.station_id);
+                        if (station && station.images && station.images.length > 0) {
+                            this.currentStationImages = station.images;
+                        }
+                    }
+                },
+                
+                showSuccessAndPlay(audioUrl) {
+                    this.showSuccess = true;
+                    
+                    setTimeout(() => {
+                        this.isProcessing = false;
+                        this.showSuccess = false;
+                        this.playAudio(audioUrl);
+                    }, 1500);
                 },
                 
                 async sendAudioToBackend(audioBlob) {
@@ -1421,7 +1548,7 @@
                             const data = await response.json();
                             
                             if (data.status === 'SUCCESS' && data.audio_url) {
-                                this.playAudio(data.audio_url);
+                                this.showSuccessAndPlay(data.audio_url);
                                 return;
                             }
                             
@@ -1449,7 +1576,6 @@
                 },
                 
                 playAudio(audioUrl) {
-                    this.isProcessing = false;
                     this.isSpeaking = true;
                     
                     this.audioElement = new Audio(audioUrl);
@@ -1458,6 +1584,7 @@
                         this.isSpeaking = false;
                         this.currentResponse = null;
                         this.currentImageIndex = 0;
+                        this.currentStationImages = [];
                         this.audioElement = null;
                     };
                     
@@ -1465,6 +1592,7 @@
                         this.isSpeaking = false;
                         this.currentResponse = null;
                         this.currentImageIndex = 0;
+                        this.currentStationImages = [];
                         this.audioElement = null;
                     };
                     
@@ -1472,18 +1600,18 @@
                 },
 
                 prevModalImage() {
-                    if (this.currentResponse && this.currentResponse.images) {
+                    if (this.currentStationImages && this.currentStationImages.length > 0) {
                         if (this.currentImageIndex > 0) {
                             this.currentImageIndex--;
                         } else {
-                            this.currentImageIndex = this.currentResponse.images.length - 1;
+                            this.currentImageIndex = this.currentStationImages.length - 1;
                         }
                     }
                 },
 
                 nextModalImage() {
-                    if (this.currentResponse && this.currentResponse.images) {
-                        if (this.currentImageIndex < this.currentResponse.images.length - 1) {
+                    if (this.currentStationImages && this.currentStationImages.length > 0) {
+                        if (this.currentImageIndex < this.currentStationImages.length - 1) {
                             this.currentImageIndex++;
                         } else {
                             this.currentImageIndex = 0;
