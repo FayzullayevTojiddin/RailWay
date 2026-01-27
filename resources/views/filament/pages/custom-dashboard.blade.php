@@ -218,8 +218,8 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(10px);
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
             z-index: 2000;
             display: flex;
             align-items: center;
@@ -1743,7 +1743,7 @@
                         duration = totalWords / 2;
                     }
                     
-                    const timePerWord = (duration * 1000 * 1) / totalWords;
+                    const timePerWord = (duration * 1000 * 1.2) / totalWords;
                     
                     this.currentWordIndex = 0;
                     
