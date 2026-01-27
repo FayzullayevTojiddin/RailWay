@@ -273,6 +273,26 @@
             color: #1f2937;
         }
 
+        .voice-modal-text .word {
+            display: inline;
+            transition: all 0.3s ease;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+
+        .voice-modal-text .word.active {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            color: white;
+            font-weight: 600;
+            transform: scale(1.05);
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+        }
+
+        .voice-modal-text .word.spoken {
+            color: #6b7280;
+            opacity: 0.7;
+        }
+
         .voice-waveform {
             display: flex;
             align-items: center;
@@ -1041,7 +1061,18 @@
 
                         <div class="voice-modal-text flex-1">
                             <template x-if="currentResponse && currentResponse.response_text">
-                                <p x-text="currentResponse.response_text"></p>
+                                <p>
+                                    <template x-for="(word, index) in getWords()" :key="index">
+                                        <span 
+                                            class="word"
+                                            :class="{
+                                                'active': currentWordIndex === index,
+                                                'spoken': currentWordIndex > index
+                                            }"
+                                            x-text="word + ' '"
+                                        ></span>
+                                    </template>
+                                </p>
                             </template>
                             <template x-if="!currentResponse || !currentResponse.response_text">
                                 <p class="text-gray-400">Javob yuklanmoqda...</p>
@@ -1429,6 +1460,9 @@
                 currentImageIndex: 0,
                 currentStationImages: [],
                 carouselInterval: null,
+                currentWordIndex: -1,
+                wordTrackingInterval: null,
+                words: [],
                 
                 toggleVoice() {
                     if (this.isListening || this.isSpeaking) {
@@ -1438,10 +1472,26 @@
                     }
                 },
                 
+                getWords() {
+                    if (!this.currentResponse || !this.currentResponse.response_text) {
+                        return [];
+                    }
+                    if (this.words.length === 0) {
+                        this.words = this.currentResponse.response_text.split(' ').filter(w => w.trim() !== '');
+                    }
+                    return this.words;
+                },
+                
                 stopAll() {
                     this.isListening = false;
                     this.isProcessing = false;
                     this.showSuccess = false;
+                    
+                    // Word tracking intervalini to'xtatish
+                    if (this.wordTrackingInterval) {
+                        clearInterval(this.wordTrackingInterval);
+                        this.wordTrackingInterval = null;
+                    }
                     
                     // Carousel intervalini to'xtatish
                     if (this.carouselInterval) {
@@ -1462,6 +1512,8 @@
                     this.currentResponse = null;
                     this.currentImageIndex = 0;
                     this.currentStationImages = [];
+                    this.currentWordIndex = -1;
+                    this.words = [];
                 },
                 
                 async startListening() {
@@ -1641,11 +1693,24 @@
                 
                 playAudio(audioUrl) {
                     this.isSpeaking = true;
+                    this.currentWordIndex = -1;
+                    this.words = [];
                     
                     this.audioElement = new Audio(audioUrl);
                     
+                    // Audio boshlanganda word tracking ni boshlash
+                    this.audioElement.onplay = () => {
+                        this.startWordTracking();
+                    };
+                    
                     this.audioElement.onended = () => {
                         this.isSpeaking = false;
+                        
+                        // Word tracking intervalini to'xtatish
+                        if (this.wordTrackingInterval) {
+                            clearInterval(this.wordTrackingInterval);
+                            this.wordTrackingInterval = null;
+                        }
                         
                         // Carousel intervalini to'xtatish
                         if (this.carouselInterval) {
@@ -1656,6 +1721,8 @@
                         this.currentResponse = null;
                         this.currentImageIndex = 0;
                         this.currentStationImages = [];
+                        this.currentWordIndex = -1;
+                        this.words = [];
                         this.audioElement = null;
                     };
                     
@@ -1663,6 +1730,12 @@
                         console.error('Audio play error');
                         this.isSpeaking = false;
                         
+                        // Word tracking intervalini to'xtatish
+                        if (this.wordTrackingInterval) {
+                            clearInterval(this.wordTrackingInterval);
+                            this.wordTrackingInterval = null;
+                        }
+                        
                         // Carousel intervalini to'xtatish
                         if (this.carouselInterval) {
                             clearInterval(this.carouselInterval);
@@ -1672,10 +1745,38 @@
                         this.currentResponse = null;
                         this.currentImageIndex = 0;
                         this.currentStationImages = [];
+                        this.currentWordIndex = -1;
+                        this.words = [];
                         this.audioElement = null;
                     };
                     
                     this.audioElement.play();
+                },
+                
+                startWordTracking() {
+                    if (!this.currentResponse || !this.currentResponse.response_text) return;
+                    
+                    const totalWords = this.getWords().length;
+                    if (totalWords === 0) return;
+                    
+                    // Audio davomiyligini olish
+                    const duration = this.audioElement.duration;
+                    
+                    // Har bir so'z uchun taxminiy vaqt (millisekundlarda)
+                    const timePerWord = (duration * 1000) / totalWords;
+                    
+                    // Birinchi so'zni darhol highlight qilish
+                    this.currentWordIndex = 0;
+                    
+                    // Har bir so'zni ketma-ket highlight qilish
+                    this.wordTrackingInterval = setInterval(() => {
+                        if (this.currentWordIndex < totalWords - 1) {
+                            this.currentWordIndex++;
+                        } else {
+                            clearInterval(this.wordTrackingInterval);
+                            this.wordTrackingInterval = null;
+                        }
+                    }, timePerWord);
                 },
 
                 prevModalImage() {
