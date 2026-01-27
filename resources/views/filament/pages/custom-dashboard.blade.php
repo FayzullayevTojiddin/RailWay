@@ -275,22 +275,12 @@
 
         .voice-modal-text .word {
             display: inline;
-            transition: all 0.3s ease;
-            padding: 2px 4px;
-            border-radius: 4px;
-        }
-
-        .voice-modal-text .word.active {
-            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-            color: white;
-            font-weight: 600;
-            transform: scale(1.05);
-            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+            transition: color 0.2s ease;
         }
 
         .voice-modal-text .word.spoken {
-            color: #6b7280;
-            opacity: 0.7;
+            color: #ef4444;
+            font-weight: 500;
         }
 
         .voice-waveform {
@@ -1066,8 +1056,7 @@
                                         <span 
                                             class="word"
                                             :class="{
-                                                'active': currentWordIndex === index,
-                                                'spoken': currentWordIndex > index
+                                                'spoken': index <= currentWordIndex
                                             }"
                                             x-text="word + ' '"
                                         ></span>
