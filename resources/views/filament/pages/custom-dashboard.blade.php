@@ -1743,7 +1743,7 @@
                         duration = totalWords / 2;
                     }
                     
-                    const timePerWord = (duration * 1000 * 1.2) / totalWords;
+                    const timePerWord = (duration * 1000 * 1) / totalWords;
                     
                     this.currentWordIndex = 0;
                     
