@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Stations\RelationManagers;
 
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -22,6 +23,11 @@ class IndicatorsRelationManager extends RelationManager
     protected static ?string $title = "Iqtisodiy ko'rsatkichlar";
     protected static ?string $modelLabel = "Iqtisodiy ko'rsatkich";
     protected static ?string $pluralModelLabel = "Iqtisodiy ko'rsatkichlar";
+
+    public function isReadOnly(): bool
+    {
+        return false;
+    }
 
     public function form(Schema $schema): Schema
     {
@@ -81,11 +87,11 @@ class IndicatorsRelationManager extends RelationManager
             ])
             ->actions([
                 EditAction::make()
-                    ->label("Tahrirlash")
-                    ->button(),
-                DeleteAction::make()
-                    ->label("O'chirish")
-                    ->button(),
+                        ->label("Tahrirlash")
+                        ->button(),
+                    DeleteAction::make()
+                        ->label("O'chirish")
+                        ->button(),
             ])
             ->bulkActions([
                 DeleteBulkAction::make(),

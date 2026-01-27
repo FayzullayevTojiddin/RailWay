@@ -32,8 +32,6 @@ class CadastresRelationManager extends RelationManager
     {
         $schema = CadastreForm::configure($schema);
         
-        // Station relation manager da bo'lganimiz uchun station_id fieldni yashiramiz
-        // Chunki station avtomatik owner record dan olinadi
         $components = collect($schema->getComponents())
             ->map(function ($section) {
                 if (method_exists($section, 'getChildComponents')) {

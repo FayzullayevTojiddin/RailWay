@@ -7,7 +7,6 @@ use Filament\Resources\Pages\ViewRecord;
 use App\Livewire\EmployeesGenderChartWidget;
 use App\Livewire\EmployeesCategoryChartWidget;
 use App\Livewire\CadastreAreaChartWidget;
-use Filament\Actions;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;

@@ -3,6 +3,11 @@
 namespace App\Filament\Resources\Stations\RelationManagers;
 
 use App\Models\Report;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -14,6 +19,7 @@ use Filament\Tables\Table;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Columns\ViewColumn;
+use Filament\Tables\Enums\FiltersLayout;
 
 class ReportsRelationManager extends RelationManager
 {
@@ -242,11 +248,11 @@ class ReportsRelationManager extends RelationManager
                     })
                     ->native(false),
             ])
-            ->filtersLayout(\Filament\Tables\Enums\FiltersLayout::AboveContent)
+            ->filtersLayout(FiltersLayout::AboveContent)
             ->deferFilters(false)
             ->filtersFormColumns(2)
             ->headerActions([
-                \Filament\Actions\CreateAction::make()
+                CreateAction::make()
                     ->label('Yangi hisobot')
                     ->icon('heroicon-o-plus')
                     ->modalHeading('Hisobot yaratish')
@@ -255,14 +261,14 @@ class ReportsRelationManager extends RelationManager
                     ->successNotificationTitle('Hisobot yaratildi'),
             ])
             ->actions([
-                \Filament\Actions\EditAction::make()
+                EditAction::make()
                     ->label('Tahrirlash')
                     ->modalHeading('Hisobotni tahrirlash')
                     ->modalWidth('lg')
                     ->successNotificationTitle('Hisobot yangilandi')
                     ->button(),
 
-                \Filament\Actions\DeleteAction::make()
+                DeleteAction::make()
                     ->label('O\'chirish')
                     ->modalHeading('Hisobotni o\'chirish')
                     ->modalDescription('Haqiqatan ham o\'chirmoqchimisiz?')
@@ -270,8 +276,8 @@ class ReportsRelationManager extends RelationManager
                     ->button(),
             ])
             ->bulkActions([
-                \Filament\Actions\BulkActionGroup::make([
-                    \Filament\Actions\DeleteBulkAction::make()
+                BulkActionGroup::make([
+                    DeleteBulkAction::make()
                         ->label('O\'chirish')
                         ->modalHeading('Hisobotlarni o\'chirish')
                         ->successNotificationTitle('Hisobotlar o\'chirildi'),
