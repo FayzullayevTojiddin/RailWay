@@ -334,6 +334,148 @@
             border-radius: 20px;
             font-size: 14px;
         }
+
+        /* Loading Animation Styles */
+        .loading-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(15px);
+            z-index: 2500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .loading-backdrop.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .loading-container {
+            text-align: center;
+            color: white;
+        }
+
+        .loading-spinner {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 30px;
+            position: relative;
+        }
+
+        .loading-spinner::before,
+        .loading-spinner::after {
+            content: '';
+            position: absolute;
+            border-radius: 50%;
+        }
+
+        .loading-spinner::before {
+            width: 80px;
+            height: 80px;
+            border: 4px solid rgba(59, 130, 246, 0.2);
+            border-top-color: #3b82f6;
+            animation: spin 1s linear infinite;
+        }
+
+        .loading-spinner::after {
+            width: 60px;
+            height: 60px;
+            top: 10px;
+            left: 10px;
+            border: 4px solid rgba(139, 92, 246, 0.2);
+            border-top-color: #8b5cf6;
+            animation: spin 0.7s linear infinite reverse;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-dots {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 20px;
+        }
+
+        .loading-dots span {
+            width: 12px;
+            height: 12px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border-radius: 50%;
+            animation: bounce 1.4s ease-in-out infinite;
+        }
+
+        .loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+        .loading-dots span:nth-child(3) { animation-delay: 0s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% {
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1.2);
+                opacity: 1;
+            }
+        }
+
+        .loading-text {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradient-shift 3s ease infinite;
+        }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .loading-subtext {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .loading-progress {
+            width: 200px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            margin: 25px auto 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .loading-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
+            background-size: 200% 100%;
+            animation: progress-slide 1.5s ease-in-out infinite;
+            border-radius: 2px;
+        }
+
+        @keyframes progress-slide {
+            0% {
+                transform: translateX(-100%);
+            }
+            100% {
+                transform: translateX(200%);
+            }
+        }
     </style>
 
     <div x-data="mapComponent()" x-init="init()" class="fixed inset-0 w-full h-screen overflow-hidden">
@@ -683,7 +825,24 @@
             </div>
         </div>
 
+        <!-- Loading Animation -->
         <div x-data="voiceAssistant()" class="fixed bottom-6 right-6 z-[1004]">
+            <div class="loading-backdrop" :class="{ 'active': isProcessing }">
+                <div class="loading-container">
+                    <div class="loading-spinner"></div>
+                    <h3 class="loading-text">AI javob tayyorlayapti...</h3>
+                    <p class="loading-subtext">Iltimos kuting</p>
+                    <div class="loading-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <div class="loading-progress">
+                        <div class="loading-progress-bar"></div>
+                    </div>
+                </div>
+            </div>
+
             <button 
                 @click="toggleVoice()"
                 class="w-16 h-16 rounded-full shadow-2xl flex items-center justify-center text-white transition-all duration-300"
@@ -1133,6 +1292,7 @@
             return {
                 isListening: false,
                 isSpeaking: false,
+                isProcessing: false,
                 mediaRecorder: null,
                 audioChunks: [],
                 audioElement: null,
@@ -1149,6 +1309,7 @@
                 
                 stopAll() {
                     this.isListening = false;
+                    this.isProcessing = false;
                     
                     if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
                         this.mediaRecorder.stop();
@@ -1180,9 +1341,12 @@
                         this.mediaRecorder.onstop = async () => {
                             const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
                             
+                            this.isListening = false;
+                            this.isProcessing = true;
+                            
                             try {
                                 const response = await this.sendAudioToBackend(audioBlob);
-                                this.isListening = false;
+                                this.isProcessing = false;
                                 
                                 if (response.success) {
                                     this.currentResponse = response;
@@ -1194,10 +1358,10 @@
                                         this.pollTtsStatus(response.task_id);
                                     }
                                 } else {
-                                    this.isListening = false;
+                                    this.isProcessing = false;
                                 }
                             } catch (error) {
-                                this.isListening = false;
+                                this.isProcessing = false;
                             }
                             
                             stream.getTracks().forEach(track => track.stop());
@@ -1213,6 +1377,7 @@
                         
                     } catch (error) {
                         this.isListening = false;
+                        this.isProcessing = false;
                         alert('Mikrofonga ruxsat berilmadi. Iltimos brauzer sozlamalarini tekshiring.');
                     }
                 },
@@ -1261,16 +1426,21 @@
                             }
                             
                             if (data.status === 'FAILED' || data.status === 'ERROR') {
+                                this.isProcessing = false;
                                 return;
                             }
                             
                             if (attempt < maxAttempts) {
                                 setTimeout(checkStatus, 1000);
+                            } else {
+                                this.isProcessing = false;
                             }
                             
                         } catch (error) {
                             if (attempt < maxAttempts) {
                                 setTimeout(checkStatus, 1000);
+                            } else {
+                                this.isProcessing = false;
                             }
                         }
                     };
@@ -1279,6 +1449,7 @@
                 },
                 
                 playAudio(audioUrl) {
+                    this.isProcessing = false;
                     this.isSpeaking = true;
                     
                     this.audioElement = new Audio(audioUrl);
