@@ -704,7 +704,12 @@
                     <div class="voice-modal-images">
                         <template x-if="currentResponse && currentResponse.images && currentResponse.images.length > 0">
                             <div class="relative w-full h-full">
-                                <img :src="currentResponse.images[currentImageIndex]" alt="Station Image" class="w-full h-full object-cover">
+                                <img 
+                                    :src="getFullImageUrl(currentResponse.images[currentImageIndex])" 
+                                    alt="Station Image" 
+                                    class="w-full h-full object-cover"
+                                    @error="handleImageError($event)"
+                                >
                                 
                                 <template x-if="currentResponse.images.length > 1">
                                     <div>
@@ -1318,6 +1323,28 @@
                             this.currentImageIndex = 0;
                         }
                     }
+                },
+
+                getFullImageUrl(imageUrl) {
+                    if (!imageUrl) return '';
+                    
+                    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+                        return imageUrl;
+                    }
+                    
+                    if (imageUrl.startsWith('/storage/')) {
+                        return window.location.origin + imageUrl;
+                    }
+                    
+                    return window.location.origin + '/storage/' + imageUrl.replace(/^\/+/, '');
+                },
+
+                handleImageError(event) {
+                    console.error('Rasm yuklashda xatolik:', event.target.src);
+                    console.log('Original URL:', this.currentResponse?.images[this.currentImageIndex]);
+                    console.log('Full response:', this.currentResponse);
+                    
+                    event.target.src = 'https://via.placeholder.com/800x600?text=Rasm+Topilmadi';
                 }
             }
         }
