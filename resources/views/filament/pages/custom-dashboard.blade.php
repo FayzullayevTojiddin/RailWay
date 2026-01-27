@@ -708,7 +708,7 @@
                             const isEnterprise = station.type && station.type.startsWith('enterprise_');
 
                             // REAL MAP uchun enterprise biroz kattaroq: 18px
-                            const sizePx = isEnterprise ? 18 : 50;
+                            const sizePx = isEnterprise ? 50 : 50;
                             const anchorX = Math.round(sizePx / 2);
                             const anchorY = sizePx;
 
