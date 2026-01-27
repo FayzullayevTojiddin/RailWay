@@ -1039,7 +1039,7 @@
                                     <span x-text="currentResponse.intent.title"></span>
                                 </template>
                                 <template x-if="!currentResponse || !currentResponse.intent">
-                                    <span>AI Javob</span>
+                                    <span>Barchinoy Javob</span>
                                 </template>
                             </h3>
                             <button @click="stopAll()" class="text-gray-400 hover:text-gray-600 transition-colors">
