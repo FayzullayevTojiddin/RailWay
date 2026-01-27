@@ -1698,9 +1698,17 @@
                     
                     this.audioElement = new Audio(audioUrl);
                     
+                    // Audio metadata yuklanganidan keyin word tracking ni boshlash
+                    this.audioElement.onloadedmetadata = () => {
+                        console.log('Audio duration:', this.audioElement.duration);
+                    };
+                    
                     // Audio boshlanganda word tracking ni boshlash
                     this.audioElement.onplay = () => {
-                        this.startWordTracking();
+                        // Bir oz kutib, keyin startWordTracking ni chaqirish
+                        setTimeout(() => {
+                            this.startWordTracking();
+                        }, 100);
                     };
                     
                     this.audioElement.onended = () => {
@@ -1760,10 +1768,21 @@
                     if (totalWords === 0) return;
                     
                     // Audio davomiyligini olish
-                    const duration = this.audioElement.duration;
+                    let duration = this.audioElement.duration;
+                    
+                    // Agar duration hali tayyor bo'lmasa, taxminiy vaqtni hisoblash
+                    if (!duration || duration === 0 || isNaN(duration) || !isFinite(duration)) {
+                        console.warn('Duration not available, using estimated time');
+                        // O'rtacha 2.5 so'z/soniya tezlikda
+                        duration = totalWords / 2.5;
+                    }
+                    
+                    console.log('Total words:', totalWords);
+                    console.log('Audio duration:', duration, 'seconds');
                     
                     // Har bir so'z uchun taxminiy vaqt (millisekundlarda)
                     const timePerWord = (duration * 1000) / totalWords;
+                    console.log('Time per word:', timePerWord, 'ms');
                     
                     // Birinchi so'zni darhol highlight qilish
                     this.currentWordIndex = 0;
