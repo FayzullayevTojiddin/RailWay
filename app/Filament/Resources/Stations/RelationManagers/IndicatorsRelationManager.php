@@ -87,11 +87,14 @@ class IndicatorsRelationManager extends RelationManager
             ])
             ->actions([
                 EditAction::make()
-                        ->label("Tahrirlash")
-                        ->button(),
-                    DeleteAction::make()
-                        ->label("O'chirish")
-                        ->button(),
+                    ->label("Tahrirlash")
+                    ->button()
+                    ->visible(fn () => request()->routeIs('filament.admin.resources.stations.edit')),
+
+                DeleteAction::make()
+                    ->label("O'chirish")
+                    ->button()
+                    ->visible(fn () => request()->routeIs('filament.admin.resources.stations.edit')),
             ])
             ->bulkActions([
                 DeleteBulkAction::make(),
