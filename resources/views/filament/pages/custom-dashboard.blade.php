@@ -211,6 +211,129 @@
             margin: 8px;
             min-width: 200px;
         }
+
+        .voice-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .voice-backdrop.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .voice-modal {
+            background: white;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 1200px;
+            max-height: 85vh;
+            overflow: hidden;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: row;
+        }
+
+        .voice-modal-images {
+            flex: 1;
+            background: #f3f4f6;
+            position: relative;
+            min-width: 0;
+        }
+
+        .voice-modal-images img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .voice-modal-content {
+            flex: 1;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .voice-modal-text {
+            font-size: 18px;
+            line-height: 1.8;
+            color: #1f2937;
+        }
+
+        .voice-waveform {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            margin-top: 30px;
+        }
+
+        .voice-waveform span {
+            width: 4px;
+            background: linear-gradient(to top, #3b82f6, #8b5cf6);
+            border-radius: 2px;
+            animation: wave 0.8s ease-in-out infinite;
+        }
+
+        .voice-waveform span:nth-child(1) { height: 20px; animation-delay: 0s; }
+        .voice-waveform span:nth-child(2) { height: 30px; animation-delay: 0.1s; }
+        .voice-waveform span:nth-child(3) { height: 40px; animation-delay: 0.2s; }
+        .voice-waveform span:nth-child(4) { height: 35px; animation-delay: 0.3s; }
+        .voice-waveform span:nth-child(5) { height: 25px; animation-delay: 0.4s; }
+
+        @keyframes wave {
+            0%, 100% { transform: scaleY(1); }
+            50% { transform: scaleY(0.5); }
+        }
+
+        .image-nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            z-index: 10;
+        }
+
+        .image-nav-btn:hover {
+            background: white;
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .image-nav-btn.prev { left: 15px; }
+        .image-nav-btn.next { right: 15px; }
+
+        .image-counter {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
     </style>
 
     <div x-data="mapComponent()" x-init="init()" class="fixed inset-0 w-full h-screen overflow-hidden">
@@ -575,6 +698,81 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
                 </svg>
             </button>
+
+            <div class="voice-backdrop" :class="{ 'active': isSpeaking }">
+                <div class="voice-modal" @click.stop>
+                    <div class="voice-modal-images">
+                        <template x-if="currentResponse && currentResponse.images && currentResponse.images.length > 0">
+                            <div class="relative w-full h-full">
+                                <img :src="currentResponse.images[currentImageIndex]" alt="Station Image" class="w-full h-full object-cover">
+                                
+                                <template x-if="currentResponse.images.length > 1">
+                                    <div>
+                                        <button @click="prevModalImage()" class="image-nav-btn prev">
+                                            <svg class="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                                            </svg>
+                                        </button>
+                                        
+                                        <button @click="nextModalImage()" class="image-nav-btn next">
+                                            <svg class="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                            </svg>
+                                        </button>
+
+                                        <div class="image-counter">
+                                            <span x-text="(currentImageIndex + 1) + ' / ' + currentResponse.images.length"></span>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                        
+                        <template x-if="!currentResponse || !currentResponse.images || currentResponse.images.length === 0">
+                            <div class="flex items-center justify-center w-full h-full">
+                                <svg class="w-24 h-24 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                            </div>
+                        </template>
+                    </div>
+
+                    <div class="voice-modal-content">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-2xl font-bold text-gray-900">
+                                <template x-if="currentResponse && currentResponse.intent">
+                                    <span x-text="currentResponse.intent.title"></span>
+                                </template>
+                                <template x-if="!currentResponse || !currentResponse.intent">
+                                    <span>AI Javob</span>
+                                </template>
+                            </h3>
+                            <button @click="stopAll()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div class="voice-modal-text flex-1">
+                            <template x-if="currentResponse && currentResponse.response_text">
+                                <p x-text="currentResponse.response_text"></p>
+                            </template>
+                            <template x-if="!currentResponse || !currentResponse.response_text">
+                                <p class="text-gray-400">Javob yuklanmoqda...</p>
+                            </template>
+                        </div>
+
+                        <div class="voice-waveform">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
     </div>
@@ -938,6 +1136,8 @@
                 mediaRecorder: null,
                 audioChunks: [],
                 audioElement: null,
+                currentResponse: null,
+                currentImageIndex: 0,
                 
                 toggleVoice() {
                     if (this.isListening || this.isSpeaking) {
@@ -960,6 +1160,8 @@
                     }
                     
                     this.isSpeaking = false;
+                    this.currentResponse = null;
+                    this.currentImageIndex = 0;
                 },
                 
                 async startListening() {
@@ -983,12 +1185,13 @@
                                 this.isListening = false;
                                 
                                 if (response.success) {
-                                    const message = response.response || response.message || 'Javob yo\'q';
+                                    this.currentResponse = response;
+                                    this.currentImageIndex = 0;
 
-                                    if (response.task_id) {
-                                        this.pollTtsStatus(response.task_id, message);
-                                    } else if (response.audio.remote_url) {
+                                    if (response.audio && response.audio.remote_url) {
                                         this.playAudio(response.audio.remote_url);
+                                    } else if (response.task_id) {
+                                        this.pollTtsStatus(response.task_id);
                                     }
                                 } else {
                                     this.isListening = false;
@@ -1037,7 +1240,7 @@
                     }
                 },
                 
-                async pollTtsStatus(taskId, fallbackText, maxAttempts = 30) {
+                async pollTtsStatus(taskId, maxAttempts = 30) {
                     let attempt = 0;
                     
                     const checkStatus = async () => {
@@ -1082,15 +1285,39 @@
                     
                     this.audioElement.onended = () => {
                         this.isSpeaking = false;
+                        this.currentResponse = null;
+                        this.currentImageIndex = 0;
                         this.audioElement = null;
                     };
                     
                     this.audioElement.onerror = () => {
                         this.isSpeaking = false;
+                        this.currentResponse = null;
+                        this.currentImageIndex = 0;
                         this.audioElement = null;
                     };
                     
                     this.audioElement.play();
+                },
+
+                prevModalImage() {
+                    if (this.currentResponse && this.currentResponse.images) {
+                        if (this.currentImageIndex > 0) {
+                            this.currentImageIndex--;
+                        } else {
+                            this.currentImageIndex = this.currentResponse.images.length - 1;
+                        }
+                    }
+                },
+
+                nextModalImage() {
+                    if (this.currentResponse && this.currentResponse.images) {
+                        if (this.currentImageIndex < this.currentResponse.images.length - 1) {
+                            this.currentImageIndex++;
+                        } else {
+                            this.currentImageIndex = 0;
+                        }
+                    }
                 }
             }
         }
