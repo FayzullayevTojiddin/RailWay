@@ -2,12 +2,11 @@
 
 namespace App\Filament\Resources\Stations\RelationManagers;
 
-use Filament\Actions\Action;
-use Filament\Actions\ActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -26,7 +25,8 @@ class IndicatorsRelationManager extends RelationManager
 
     public function isReadOnly(): bool
     {
-        return false;
+        $referer = request()->header('referer') ?? '';
+        return ! str_contains($referer, '/edit');
     }
 
     public function form(Schema $schema): Schema
@@ -39,16 +39,13 @@ class IndicatorsRelationManager extends RelationManager
                 ->imagePreviewHeight('80vh')
                 ->panelAspectRatio('21:9')
                 ->panelLayout('integrated')
-
                 ->openable()
-
                 ->acceptedFileTypes([
-                        'image/*',
-                        'application/pdf',
-                        'application/msword',
-                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                    ])
-                    
+                    'image/*',
+                    'application/pdf',
+                    'application/msword',
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                ])
                 ->columnSpanFull(),
 
             TextInput::make('title')
@@ -66,7 +63,11 @@ class IndicatorsRelationManager extends RelationManager
 
     public function table(Table $table): Table
     {
+        $referer = request()->header('referer') ?? '';
+        $isEditMode = str_contains($referer, '/edit');
+
         return $table
+            ->recordAction('view')
             ->recordTitleAttribute('title')
             ->columns([
                 TextColumn::make('title')
@@ -82,22 +83,23 @@ class IndicatorsRelationManager extends RelationManager
                     ->label("Yaratilgan sana")
                     ->dateTime('d.m.Y'),
             ])
-            ->headerActions([
-                CreateAction::make()->label("Yangi iqtisodiy ko'rsatkich"),
-            ])
-            ->actions([
-                EditAction::make()
-                    ->label("Tahrirlash")
-                    ->button()
-                    ->visible(fn () => request()->routeIs('filament.admin.resources.stations.edit')),
-
-                DeleteAction::make()
-                    ->label("O'chirish")
-                    ->button()
-                    ->visible(fn () => request()->routeIs('filament.admin.resources.stations.edit')),
-            ])
-            ->bulkActions([
-                DeleteBulkAction::make(),
-            ]);
+            ->headerActions(
+                $isEditMode ? [
+                    CreateAction::make()->label("Yangi iqtisodiy ko'rsatkich"),
+                ] : []
+            )
+            ->actions(
+                $isEditMode ? [
+                    EditAction::make()->label("Tahrirlash")->button(),
+                    DeleteAction::make()->label("O'chirish")->button(),
+                ] : [
+                    ViewAction::make()->label("Ko'rish")->button(),
+                ]
+            )
+            ->bulkActions(
+                $isEditMode ? [
+                    DeleteBulkAction::make(),
+                ] : []
+            );
     }
 }
