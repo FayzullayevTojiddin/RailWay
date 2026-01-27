@@ -1454,6 +1454,7 @@
                                     this.currentResponse = response;
                                     this.currentImageIndex = 0;
                                     
+                                    // Rasmlarni sidebar paneldagi kabi to'g'ridan-to'g'ri olish
                                     this.loadStationImages(response);
 
                                     if (response.audio && response.audio.remote_url) {
@@ -1467,6 +1468,7 @@
                                     this.isProcessing = false;
                                 }
                             } catch (error) {
+                                console.error('Audio backend error:', error);
                                 this.isProcessing = false;
                             }
                             
@@ -1482,6 +1484,7 @@
                         }, 5000);
                         
                     } catch (error) {
+                        console.error('Microphone error:', error);
                         this.isListening = false;
                         this.isProcessing = false;
                         alert('Mikrofonga ruxsat berilmadi. Iltimos brauzer sozlamalarini tekshiring.');
@@ -1491,11 +1494,12 @@
                 loadStationImages(response) {
                     this.currentStationImages = [];
                     
-                    if (response.intent && response.intent.station_id && window.mapStations) {
-                        const station = window.mapStations.find(s => s.id === response.intent.station_id);
-                        if (station && station.images && station.images.length > 0) {
-                            this.currentStationImages = station.images;
-                        }
+                    // Backend javobidan to'g'ridan-to'g'ri images arrayni olish
+                    if (response.images && Array.isArray(response.images) && response.images.length > 0) {
+                        this.currentStationImages = response.images;
+                        console.log('Loaded images from response:', this.currentStationImages);
+                    } else {
+                        console.log('No images in response');
                     }
                 },
                 
@@ -1528,6 +1532,7 @@
                         
                         return await response.json();
                     } catch (error) {
+                        console.error('Send audio error:', error);
                         throw error;
                     }
                 },
@@ -1553,6 +1558,7 @@
                             }
                             
                             if (data.status === 'FAILED' || data.status === 'ERROR') {
+                                console.error('TTS failed:', data);
                                 this.isProcessing = false;
                                 return;
                             }
@@ -1560,10 +1566,12 @@
                             if (attempt < maxAttempts) {
                                 setTimeout(checkStatus, 1000);
                             } else {
+                                console.error('TTS timeout');
                                 this.isProcessing = false;
                             }
                             
                         } catch (error) {
+                            console.error('Poll TTS error:', error);
                             if (attempt < maxAttempts) {
                                 setTimeout(checkStatus, 1000);
                             } else {
@@ -1589,6 +1597,7 @@
                     };
                     
                     this.audioElement.onerror = () => {
+                        console.error('Audio play error');
                         this.isSpeaking = false;
                         this.currentResponse = null;
                         this.currentImageIndex = 0;
@@ -1619,6 +1628,6 @@
                     }
                 }
             }
-        }
+            }
     </script>
 </div>
