@@ -1773,15 +1773,16 @@
                     // Agar duration hali tayyor bo'lmasa, taxminiy vaqtni hisoblash
                     if (!duration || duration === 0 || isNaN(duration) || !isFinite(duration)) {
                         console.warn('Duration not available, using estimated time');
-                        // O'rtacha 2.5 so'z/soniya tezlikda
-                        duration = totalWords / 2.5;
+                        // O'rtacha 2 so'z/soniya tezlikda (sekinroq)
+                        duration = totalWords / 2;
                     }
                     
                     console.log('Total words:', totalWords);
                     console.log('Audio duration:', duration, 'seconds');
                     
                     // Har bir so'z uchun taxminiy vaqt (millisekundlarda)
-                    const timePerWord = (duration * 1000) / totalWords;
+                    // 1.4x sekinroq qilish uchun duration ni ko'paytirish
+                    const timePerWord = (duration * 1000 * 1.4) / totalWords;
                     console.log('Time per word:', timePerWord, 'ms');
                     
                     // Birinchi so'zni darhol highlight qilish
