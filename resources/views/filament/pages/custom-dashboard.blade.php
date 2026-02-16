@@ -1534,8 +1534,9 @@
                                     
                                     this.loadStationImages(response);
 
-                                    if (response.audio && (response.audio.local_url || response.audio.remote_url)) {
-                                        this.showSuccessAndPlay(response.audio.local_url || response.audio.remote_url);
+                                    if (response.audio && (response.audio.data_url || response.audio.local_url || response.audio.remote_url)) {
+                                        const audioUrl = response.audio.data_url || response.audio.local_url || response.audio.remote_url;
+                                        this.showSuccessAndPlay(audioUrl);
                                     } else {
                                         this.isProcessing = false;
                                     }

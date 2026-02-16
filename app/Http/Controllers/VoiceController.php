@@ -71,11 +71,10 @@ class VoiceController extends Controller
                 'response_format' => 'mp3',
             ]);
 
-            $fileName = 'tts_' . md5($text . microtime(true)) . '.mp3';
-            Storage::put("public/tts/{$fileName}", $response);
+            $base64 = base64_encode($response);
 
             return [
-                'local_url' => Storage::url("tts/{$fileName}"),
+                'data_url' => 'data:audio/mp3;base64,' . $base64,
             ];
         } catch (\Exception $e) {
             Log::error('TTS error', ['err' => $e->getMessage()]);
