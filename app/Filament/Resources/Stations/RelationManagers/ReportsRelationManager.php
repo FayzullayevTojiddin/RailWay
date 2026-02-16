@@ -20,6 +20,8 @@ use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Columns\ViewColumn;
 use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\Filter;
+use Carbon\Carbon;
 
 class ReportsRelationManager extends RelationManager
 {
@@ -237,20 +239,47 @@ class ReportsRelationManager extends RelationManager
                     ])
                     ->native(false),
 
-                SelectFilter::make('month')
-                    ->label('Oy')
-                    ->options(fn () => $this->getLast12MonthsOptions())
-                    ->query(function (Builder $query, array $data) {
-                        if (isset($data['value'])) {
-                            $query->whereYear('date', substr($data['value'], 0, 4))
-                                  ->whereMonth('date', substr($data['value'], 5, 2));
-                        }
+                Filter::make('date_from')
+                    ->form([
+                        DatePicker::make('date_from')
+                            ->label('Dan')
+                            ->native(false),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query->when(
+                            $data['date_from'],
+                            fn (Builder $query, $date): Builder => $query->whereDate('date', '>=', $date),
+                        );
                     })
-                    ->native(false),
+                    ->indicateUsing(function (array $data): array {
+                        if ($data['date_from'] ?? null) {
+                            return ['Dan: ' . Carbon::parse($data['date_from'])->format('d.m.Y')];
+                        }
+                        return [];
+                    }),
+
+                Filter::make('date_until')
+                    ->form([
+                        DatePicker::make('date_until')
+                            ->label('Gacha')
+                            ->native(false),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query->when(
+                            $data['date_until'],
+                            fn (Builder $query, $date): Builder => $query->whereDate('date', '<=', $date),
+                        );
+                    })
+                    ->indicateUsing(function (array $data): array {
+                        if ($data['date_until'] ?? null) {
+                            return ['Gacha: ' . Carbon::parse($data['date_until'])->format('d.m.Y')];
+                        }
+                        return [];
+                    }),
             ])
             ->filtersLayout(FiltersLayout::AboveContent)
+            ->filtersFormColumns(3)
             ->deferFilters(false)
-            ->filtersFormColumns(2)
             ->headerActions([
                 CreateAction::make()
                     ->label('Yangi hisobot')
