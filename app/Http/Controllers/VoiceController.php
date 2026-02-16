@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Station;
 use Illuminate\Support\Facades\Log;
@@ -16,8 +15,7 @@ class VoiceController extends Controller
     {
         try {
             $audioFile = $request->file('audio');
-            $audioHash = md5_file($audioFile->getRealPath());
-            $transcribedText = $this->getCachedTranscription($audioHash, $audioFile);
+            $transcribedText = $this->speechToText($audioFile);
             $intent = $this->detectEntity($transcribedText);
             $responseData = $this->getResponse($intent);
             $audioResult = $this->textToSpeech($responseData['text']);
@@ -36,16 +34,6 @@ class VoiceController extends Controller
         }
     }
 
-    // ==================== STT: OpenAI Whisper ====================
-
-    private function getCachedTranscription(string $audioHash, $audioFile): string
-    {
-        $cacheKey = 'stt_' . $audioHash;
-        return Cache::remember($cacheKey, 60 * 24 * 30, function () use ($audioFile) {
-            return $this->speechToText($audioFile);
-        });
-    }
-
     private function speechToText($audioFile): string
     {
         $extension = $audioFile->getClientOriginalExtension() ?: 'webm';
@@ -56,7 +44,6 @@ class VoiceController extends Controller
             $response = OpenAI::audio()->transcribe([
                 'model'           => 'whisper-1',
                 'file'            => fopen($tempPath, 'r'),
-                // 'language'        => 'ru',
                 'response_format' => 'json',
             ]);
 
@@ -68,14 +55,11 @@ class VoiceController extends Controller
 
             return $text;
         } finally {
-            // Vaqtincha faylni o'chirish
             if (file_exists($tempPath)) {
                 unlink($tempPath);
             }
         }
     }
-
-    // ==================== TTS: OpenAI TTS ====================
 
     protected function textToSpeech(string $text): ?array
     {
@@ -98,8 +82,6 @@ class VoiceController extends Controller
             return null;
         }
     }
-
-    // ==================== Entity Detection: GPT (Russian) ====================
 
     private function detectEntity(string $text): ?array
     {
@@ -157,8 +139,6 @@ class VoiceController extends Controller
             ];
         }
     }
-
-    // ==================== Response (Russian) ====================
 
     private function getResponse(?array $intent): array
     {
