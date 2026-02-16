@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Station;
@@ -13,15 +12,6 @@ use OpenAI\Laravel\Facades\OpenAI;
 
 class VoiceController extends Controller
 {
-    private $apiKey;
-    private $baseUrl;
-    
-    public function __construct()
-    {
-        $this->apiKey = config('services.uzbekvoice.api_key');
-        $this->baseUrl = config('services.uzbekvoice.base_url', 'https://uzbekvoice.ai');
-    }
-    
     public function processVoice(Request $request)
     {
         try {
@@ -31,7 +21,7 @@ class VoiceController extends Controller
             $intent = $this->detectEntity($transcribedText);
             $responseData = $this->getResponse($intent);
             $audioResult = $this->textToSpeech($responseData['text']);
-            
+
             return response()->json([
                 'success' => true,
                 'transcribed_text' => $transcribedText,
@@ -40,168 +30,131 @@ class VoiceController extends Controller
                 'images' => $responseData['images'],
                 'audio' => $audioResult,
             ]);
-            
         } catch (\Exception $e) {
+            Log::error('processVoice error', ['err' => $e->getMessage()]);
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
     }
 
-    protected function textToSpeech($text)
-    {
-        $endpoint = $this->baseUrl . '/api/v1/tts';
-        $payload = [
-            'text' => $text,
-            'model' => 'lola',
-            'blocking' => 'true',
-        ];
-        try {
-            $response = Http::withHeaders([
-                'Authorization' => $this->apiKey,
-                'Content-Type' => 'application/json',
-            ])->post($endpoint, $payload);
+    // ==================== STT: OpenAI Whisper ====================
 
-            if (!$response->successful()) {
-                Log::error('TTS failed', [
-                    'status' => $response->status(),
-                    'body' => $response->body()
-                ]);
-                return null;
-            }
-
-            $data = $response->json();
-            $remoteUrl = $data['result']['url'] ?? null;
-
-            if (!$remoteUrl) {
-                Log::error('TTS response missing URL');
-                return null;
-            }
-            
-            try {
-                $fileData = Http::get($remoteUrl)->body();
-                $fileName = 'tts_' . md5($text . microtime(true)) . '.wav';
-
-                Storage::put("public/tts/{$fileName}", $fileData);
-
-                return [
-                    'remote_url' => $remoteUrl,
-                    'local_url' => Storage::url("tts/{$fileName}")
-                ];
-            } catch (\Exception $e) {
-                return [
-                    'remote_url' => $remoteUrl,
-                    'local_url' => null
-                ];
-            }
-        }
-        catch (\Exception $e) {
-            Log::error('TTS request exception', ['err' => $e->getMessage()]);
-            return null;
-        }
-    }
-    
-    private function getCachedTranscription($audioHash, $audioFile)
+    private function getCachedTranscription(string $audioHash, $audioFile): string
     {
         $cacheKey = 'stt_' . $audioHash;
-        return Cache::remember($cacheKey, 60 * 24 * 30, function() use ($audioFile) {
+        return Cache::remember($cacheKey, 60 * 24 * 30, function () use ($audioFile) {
             return $this->speechToText($audioFile);
         });
     }
-    
-    private function speechToText($audioFile)
+
+    private function speechToText($audioFile): string
     {
-        $audioContent = file_get_contents($audioFile->getRealPath());
-        
-        $response = Http::timeout(60)
-            ->withHeaders(['Authorization' => $this->apiKey])
-            ->attach('file', $audioContent, $audioFile->getClientOriginalName())
-            ->post($this->baseUrl . '/api/v1/stt', [
-                'language' => 'uz',
-                'model' => 'lola',
-                'blocking' => 'true'
-            ]);
-        
-        if (!$response->successful()) {
-            throw new \Exception('STT API xatosi: ' . $response->status());
-        }
-        
-        $data = $response->json();
-        return trim($data['result']['text'] ?? $data['text'] ?? '');
-    }
-    
-    private function detectEntity(string $text): ?array
-{
-    $text = trim($text);
-
-    if ($text === '') {
-        return null;
-    }
-
-    $entities = Station::query()
-        ->select('id', 'title')
-        ->get()
-        ->map(fn ($s) => "{$s->id}:{$s->title}")
-        ->implode(', ');
-    $prompt = <<<PROMPT
-Matn: "{$text}"
-
-Mavjud stansiyalar (id:nom):
-{$entities}
-
-Qoidalar:
-- Matn istalgan turdagi gap bo‘lishi mumkin (xabar, so‘rov, buyruq, savol)
-- Gap maqsadi muhim emas, FAFAQAT ichidagi stansiya nomini aniqlash kerak
-- Qidiruv katta-kichik harflarga bog‘liq emas
-- Agar matnda stansiya nomi to‘liq yoki qisman uchrasa
-  (imlo xatosi, qo‘shimcha so‘zlar, "stansiyasi" kabi),
-  eng mos keladigan stansiyani tanla
-- Agar moslik kuchsiz yoki ishonchsiz bo‘lsa — id va title null bo‘lsin
-- Faqat bitta stansiya tanla
-- Faqat JSON qaytar, izoh yozma
-
-JSON:
-{
-  "id": number|null,
-  "title": string|null
-}
-PROMPT;
-
-    try {
-        $response = OpenAI::chat()->create([
-            'model' => 'gpt-4o-mini',
-            'temperature' => 0,
-            'messages' => [
-                ['role' => 'system', 'content' => 'Faqat JSON qaytar.'],
-                ['role' => 'user', 'content' => $prompt],
-            ],
+        $response = OpenAI::audio()->transcribe([
+            'model'           => 'whisper-1',
+            'file'            => fopen($audioFile->getRealPath(), 'r'),
+            'language'        => 'ru',
+            'response_format' => 'json',
         ]);
 
-        $content = preg_replace('/```json|```/i', '', $response->choices[0]->message->content ?? '');
-        $data = json_decode(trim($content), true);
+        $text = trim($response->text ?? '');
 
-        if (!isset($data['id'], $data['title'])) {
-            throw new \RuntimeException();
+        if ($text === '') {
+            throw new \Exception('Whisper: empty transcription result');
         }
 
-        return [
-            'id'    => $data['id'] !== null ? (int) $data['id'] : null,
-            'title' => $data['title'] ?? null,
-        ];
-
-    } catch (\Throwable) {
-        return [
-            'id'    => null,
-            'title' => null,
-        ];
+        return $text;
     }
-}
 
+    // ==================== TTS: OpenAI TTS ====================
 
-    private function getResponse(array $intent): array
+    protected function textToSpeech(string $text): ?array
+    {
+        try {
+            $response = OpenAI::audio()->speech([
+                'model'           => 'tts-1',
+                'voice'           => 'nova',
+                'input'           => $text,
+                'response_format' => 'mp3',
+            ]);
+
+            $fileName = 'tts_' . md5($text . microtime(true)) . '.mp3';
+            Storage::put("public/tts/{$fileName}", $response);
+
+            return [
+                'local_url' => Storage::url("tts/{$fileName}"),
+            ];
+        } catch (\Exception $e) {
+            Log::error('TTS error', ['err' => $e->getMessage()]);
+            return null;
+        }
+    }
+
+    // ==================== Entity Detection: GPT (Russian) ====================
+
+    private function detectEntity(string $text): ?array
+    {
+        $text = trim($text);
+
+        if ($text === '') {
+            return null;
+        }
+
+        $entities = Station::query()
+            ->select('id', 'title')
+            ->get()
+            ->map(fn($s) => "{$s->id}:{$s->title}")
+            ->implode(', ');
+
+        $prompt = "Текст: \"{$text}\"\n\n"
+            . "Доступные станции (id:название):\n{$entities}\n\n"
+            . "Правила:\n"
+            . "- Текст может быть любым типом предложения (сообщение, запрос, команда, вопрос)\n"
+            . "- Цель предложения не важна, нужно ТОЛЬКО определить название станции внутри текста\n"
+            . "- Поиск не зависит от регистра\n"
+            . "- Если в тексте встречается полное или частичное название станции\n"
+            . "  (орфографическая ошибка, дополнительные слова, слово \"станция\" и т.д.),\n"
+            . "  выбери наиболее подходящую станцию\n"
+            . "- Если совпадение слабое или ненадёжное — id и title должны быть null\n"
+            . "- Выбери только одну станцию\n"
+            . "- Верни только JSON, без комментариев\n\n"
+            . "JSON:\n{\n  \"id\": number|null,\n  \"title\": string|null\n}";
+
+        try {
+            $response = OpenAI::chat()->create([
+                'model'       => 'gpt-4o-mini',
+                'temperature' => 0,
+                'messages'    => [
+                    ['role' => 'system', 'content' => 'Верни только JSON.'],
+                    ['role' => 'user',   'content' => $prompt],
+                ],
+            ]);
+
+            $content = preg_replace('/```json|```/i', '', $response->choices[0]->message->content ?? '');
+            $data = json_decode(trim($content), true);
+
+            if (!isset($data['id'], $data['title'])) {
+                throw new \RuntimeException();
+            }
+
+            return [
+                'id'    => $data['id'] !== null ? (int) $data['id'] : null,
+                'title' => $data['title'] ?? null,
+            ];
+        } catch (\Throwable) {
+            return [
+                'id'    => null,
+                'title' => null,
+            ];
+        }
+    }
+
+    // ==================== Response (Russian) ====================
+
+    private function getResponse(?array $intent): array
     {
         if (empty($intent['title']) || empty($intent['id'])) {
             return [
-                'text' => "Siz so'ragan korxona yoki stansiya haqida ma'lumot topilmadi.",
-                'images' => []
+                'text'   => 'К сожалению, информация по запрашиваемой станции не найдена.',
+                'images' => [],
             ];
         }
 
@@ -213,6 +166,7 @@ PROMPT;
         try {
             $station = Station::findOrFail($id);
             $images = [];
+
             if (is_array($station->images)) {
                 $images = collect($station->images)
                     ->map(function ($path) {
@@ -222,14 +176,15 @@ PROMPT;
                     ->values()
                     ->toArray();
             }
+
             return [
-                'text' => $station->ai_response ?: "Hozircha ma'lumotlar mavjud emas",
-                'images' => $images
+                'text'   => $station->ai_response ?: 'Информация пока недоступна.',
+                'images' => $images,
             ];
         } catch (Exception $e) {
             return [
-                'text' => "Tizimda xatolik. Kechirasiz sizga hozir javob bera olmayman",
-                'images' => []
+                'text'   => 'Произошла ошибка в системе. Извините, сейчас не могу ответить.',
+                'images' => [],
             ];
         }
     }
