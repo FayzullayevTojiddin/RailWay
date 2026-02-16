@@ -48,20 +48,32 @@ class VoiceController extends Controller
 
     private function speechToText($audioFile): string
     {
-        $response = OpenAI::audio()->transcribe([
-            'model'           => 'whisper-1',
-            'file'            => fopen($audioFile->getRealPath(), 'r'),
-            'language'        => 'ru',
-            'response_format' => 'json',
-        ]);
+        // Faylni to'g'ri extension bilan vaqtincha saqlash
+        $extension = $audioFile->getClientOriginalExtension() ?: 'webm';
+        $tempPath = storage_path('app/temp_' . uniqid() . '.' . $extension);
+        copy($audioFile->getRealPath(), $tempPath);
 
-        $text = trim($response->text ?? '');
+        try {
+            $response = OpenAI::audio()->transcribe([
+                'model'           => 'whisper-1',
+                'file'            => fopen($tempPath, 'r'),
+                'language'        => 'ru',
+                'response_format' => 'json',
+            ]);
 
-        if ($text === '') {
-            throw new \Exception('Whisper: empty transcription result');
+            $text = trim($response->text ?? '');
+
+            if ($text === '') {
+                throw new \Exception('Whisper: empty transcription result');
+            }
+
+            return $text;
+        } finally {
+            // Vaqtincha faylni o'chirish
+            if (file_exists($tempPath)) {
+                unlink($tempPath);
+            }
         }
-
-        return $text;
     }
 
     // ==================== TTS: OpenAI TTS ====================
