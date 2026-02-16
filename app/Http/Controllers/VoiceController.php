@@ -27,7 +27,7 @@ class VoiceController extends Controller
                 'response_text' => $responseData['text'],
                 'images' => $responseData['images'],
                 'audio' => $audioResult,
-            ]);
+            ], 200, [], JSON_UNESCAPED_UNICODE);
         } catch (\Exception $e) {
             Log::error('processVoice error', ['err' => $e->getMessage()]);
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
