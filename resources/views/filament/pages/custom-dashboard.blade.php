@@ -1534,8 +1534,9 @@
                                     
                                     this.loadStationImages(response);
 
-                                    if (response.audio && response.audio.remote_url) {
-                                        this.showSuccessAndPlay(response.audio.remote_url);
+                                    if (response.audio && (response.audio.local_url || response.audio.remote_url)) {
+                                        const audioUrl = response.audio.local_url || response.audio.remote_url;
+                                        this.showSuccessAndPlay(audioUrl);
                                     } else if (response.task_id) {
                                         this.pollTtsStatus(response.task_id);
                                     } else {
