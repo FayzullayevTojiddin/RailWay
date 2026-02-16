@@ -48,7 +48,6 @@ class VoiceController extends Controller
 
     private function speechToText($audioFile): string
     {
-        // Faylni to'g'ri extension bilan vaqtincha saqlash
         $extension = $audioFile->getClientOriginalExtension() ?: 'webm';
         $tempPath = storage_path('app/temp_' . uniqid() . '.' . $extension);
         copy($audioFile->getRealPath(), $tempPath);
@@ -57,7 +56,7 @@ class VoiceController extends Controller
             $response = OpenAI::audio()->transcribe([
                 'model'           => 'whisper-1',
                 'file'            => fopen($tempPath, 'r'),
-                'language'        => 'ru',
+                // 'language'        => 'ru',
                 'response_format' => 'json',
             ]);
 
