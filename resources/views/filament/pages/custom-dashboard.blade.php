@@ -950,8 +950,8 @@
                     <template x-if="!showSuccess">
                         <div>
                             <div class="loading-spinner"></div>
-                            <h3 class="loading-text">Barchinoy javob tayyorlayapti...</h3>
-                            <p class="loading-subtext">Iltimos kuting</p>
+                            <h3 class="loading-text">Барчиной готовит ответ...</h3>
+                            <p class="loading-subtext">Пожалуйста, подождите</p>
                             <div class="loading-dots">
                                 <span></span>
                                 <span></span>
@@ -973,7 +973,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <h3 class="success-text">Tayyor!</h3>
+                            <h3 class="success-text">Готово!</h3>
                         </div>
                     </template>
                 </div>
@@ -987,7 +987,7 @@
                     'bg-gradient-to-r from-green-600 to-emerald-600 animate-pulse': isSpeaking,
                     'bg-gradient-to-r from-blue-600 to-indigo-600 hover:scale-110': !isListening && !isSpeaking
                 }"
-                :title="isListening ? 'Eshityapman...' : (isSpeaking ? 'Gapiryapman...' : 'AI bilan gaplashish')"
+                :title="isListening ? 'Слушаю...' : (isSpeaking ? 'Говорю...' : 'Поговорить с ИИ')"
             >
                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
@@ -1039,7 +1039,7 @@
                                     <span x-text="currentResponse.intent.title"></span>
                                 </template>
                                 <template x-if="!currentResponse || !currentResponse.intent">
-                                    <span>Barchinoy Javob</span>
+                                    <span>Ответ Барчиной</span>
                                 </template>
                             </h3>
                             <button @click="stopAll()" class="text-gray-400 hover:text-gray-600 transition-colors">
@@ -1064,7 +1064,7 @@
                                 </p>
                             </template>
                             <template x-if="!currentResponse || !currentResponse.response_text">
-                                <p class="text-gray-400">Javob yuklanmoqda...</p>
+                                <p class="text-gray-400">Загрузка ответа...</p>
                             </template>
                         </div>
 
@@ -1561,7 +1561,7 @@
                     } catch (error) {
                         this.isListening = false;
                         this.isProcessing = false;
-                        alert('Mikrofonga ruxsat berilmadi. Iltimos brauzer sozlamalarini tekshiring.');
+                        alert('Доступ к микрофону не разрешён. Проверьте настройки браузера.');
                     }
                 },
 
