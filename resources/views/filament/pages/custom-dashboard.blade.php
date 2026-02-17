@@ -1223,13 +1223,16 @@
                     this.trains = [];
                     if (!this.stations || this.stations.length < 5) return;
 
-                    const route1Stations = ['Quduqli', 'Sariosiyo', 'Denov', 'Xayrabod', "Sho'rchi", 'Elbayon', "Qumqo'rg'on"];
+                    // const route1Stations = ['Quduqli', 'Sariosiyo', 'Denov', 'Xayrabod', "Sho'rchi", 'Elbayon', "Qumqo'rg'on"];
+                    const route1Stations = ['Кудукли', 'Сариасиё', 'Денов', 'Хайрабод', 'Шурчи', 'Элбайон', 'Кумкурган'];
                     const route1 = route1Stations.map(name => this.stations.findIndex(s => s.title === name)).filter(idx => idx !== -1);
 
-                    const route2Stations = ['Oqnazar', "Sho'rob", 'PCH-15', 'Darband', 'Boysun', 'Pulhakim', 'Tangimush', 'Oqjar', "Qumqo'rg'on", 'Surxon', 'Zartepa', "Jarqo'rg'on", 'Baktriya', 'Termiz'];
+                    // const route2Stations = ['Oqnazar', "Sho'rob", 'PCH-15', 'Darband', 'Boysun', 'Pulhakim', 'Tangimush', 'Oqjar', "Qumqo'rg'on", 'Surxon', 'Zartepa', "Jarqo'rg'on", 'Baktriya', 'Termiz'];
+                    const route2Stations = ['Окназар', 'Шуроб', 'Дарбанд', 'Бойсун', 'Пулхаким', 'Тангимуш', 'Окджар', 'Кумкурган', 'Сурхон', 'Зартепа', 'Жарқурган', 'Бактрия', 'Термиз'];
                     const route2 = route2Stations.map(name => this.stations.findIndex(s => s.title === name)).filter(idx => idx !== -1);
 
-                    const route3Stations = ['Surxonobod', 'Boldir', 'Sherabod', 'Naushaxar', 'Uchqizil', 'Termiz'];
+                    // const route3Stations = ['Surxonobod', 'Boldir', 'Sherabod', 'Naushaxar', 'Uchqizil', 'Termiz'];
+                    const route3Stations = ['Сурхонобод', 'Болдир', 'Шерабод', 'Наушахар', 'Учқизил', 'Термиз'];
                     const route3 = route3Stations.map(name => this.stations.findIndex(s => s.title === name)).filter(idx => idx !== -1);
 
                     const routes = [];
