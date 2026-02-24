@@ -65,7 +65,7 @@ class EmployeesTable
                     ->label('Ishga kirgan')
                     ->dateTime('d.m.Y')
                     ->sortable()
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 SelectFilter::make('station_id')
