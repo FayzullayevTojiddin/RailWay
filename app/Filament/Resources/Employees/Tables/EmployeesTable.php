@@ -30,12 +30,8 @@ class EmployeesTable
                     ->label('To\'liq ismi')
                     ->searchable()
                     ->sortable()
+                    ->limit(40)
                     ->weight('bold'),
-
-                TextColumn::make('phone_number')
-                    ->label('Telefon')
-                    ->searchable()
-                    ->icon('heroicon-m-phone'),
 
                 TextColumn::make('station.title')
                     ->label('Stansiya')
