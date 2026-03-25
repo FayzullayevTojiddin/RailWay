@@ -55,4 +55,14 @@ class Station extends Model
     {
         return $this->hasMany(EconomicIndicator::class);
     }
+
+    public function avtomobillar(): HasMany
+    {
+        return $this->hasMany(Avtomobil::class);
+    }
+
+    public function mikrosxemalar(): HasMany
+    {
+        return $this->hasMany(Mikrosxema::class);
+    }
 }

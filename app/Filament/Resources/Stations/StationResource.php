@@ -22,6 +22,8 @@ use App\Filament\Resources\Stations\RelationManagers\IndicatorsRelationManager;
 use App\Filament\Resources\Stations\RelationManagers\ReportsRelationManager;
 use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Resources\Stations\RelationManagers\LocomotivesRelationManager;
+use App\Filament\Resources\Stations\RelationManagers\AvtomobillarRelationManager;
+use App\Filament\Resources\Stations\RelationManagers\MikrosxemalarRelationManager;
 
 class StationResource extends Resource
 {
@@ -79,7 +81,9 @@ class StationResource extends Resource
             CadastresRelationManager::class,
             ReportsRelationManager::class,
             LocomotivesRelationManager::class,
-            IndicatorsRelationManager::class
+            IndicatorsRelationManager::class,
+            AvtomobillarRelationManager::class,
+            MikrosxemalarRelationManager::class
         ];
     }
 

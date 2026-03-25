@@ -1,0 +1,131 @@
+<?php
+
+namespace App\Filament\Resources\Stations\RelationManagers;
+
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\TextInput;
+use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\ImageColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
+
+class AvtomobillarRelationManager extends RelationManager
+{
+    protected static string $relationship = 'avtomobillar';
+    protected static ?string $title = 'Avtomobillar';
+    protected static ?string $modelLabel = 'Avtomobil';
+    protected static ?string $pluralModelLabel = 'Avtomobillar';
+
+    public function isReadOnly(): bool
+    {
+        return false;
+    }
+
+    public function form(Schema $schema): Schema
+    {
+        return $schema
+            ->components([
+                Section::make('Avtomobil ma\'lumotlari')
+                    ->schema([
+                        TextInput::make('rusumi')
+                            ->label('Rusumi')
+                            ->required()
+                            ->maxLength(255),
+                        TextInput::make('davlat_raqami')
+                            ->label('Davlat raqami')
+                            ->required()
+                            ->maxLength(255),
+                        TextInput::make('ishlab_chiqarilgan_yili')
+                            ->label('Ishlab chiqarilgan yili')
+                            ->required()
+                            ->numeric()
+                            ->minValue(1950)
+                            ->maxValue(date('Y')),
+                        TextInput::make('biriktirilgan_shaxs')
+                            ->label('Biriktirilgan shaxs')
+                            ->required()
+                            ->maxLength(255),
+                    ])
+                    ->columns(1),
+
+                Section::make('Rasmlar')
+                    ->schema([
+                        FileUpload::make('rasmlar')
+                            ->label('Avtomobil rasmlari')
+                            ->image()
+                            ->multiple()
+                            ->maxFiles(4)
+                            ->directory('avtomobillar')
+                            ->imageEditor()
+                            ->columnSpanFull(),
+                        FileUpload::make('texpassport_old')
+                            ->label('Texpassport (old tomoni)')
+                            ->image()
+                            ->directory('avtomobillar/texpassport')
+                            ->imageEditor(),
+                        FileUpload::make('texpassport_orqa')
+                            ->label('Texpassport (orqa tomoni)')
+                            ->image()
+                            ->directory('avtomobillar/texpassport')
+                            ->imageEditor(),
+                    ])
+                    ->columns(2),
+            ]);
+    }
+
+    public function table(Table $table): Table
+    {
+        return $table
+            ->recordTitleAttribute('rusumi')
+            ->columns([
+                TextColumn::make('rusumi')
+                    ->label('Rusumi')
+                    ->searchable()
+                    ->alignCenter(),
+                TextColumn::make('davlat_raqami')
+                    ->label('Davlat raqami')
+                    ->searchable()
+                    ->alignCenter(),
+                TextColumn::make('ishlab_chiqarilgan_yili')
+                    ->label('Ishlab chiqarilgan yili')
+                    ->sortable()
+                    ->alignCenter(),
+                TextColumn::make('biriktirilgan_shaxs')
+                    ->label('Biriktirilgan shaxs')
+                    ->searchable()
+                    ->alignCenter(),
+                ImageColumn::make('rasmlar')
+                    ->label('Rasm')
+                    ->circular()
+                    ->stacked()
+                    ->alignCenter()
+                    ->limit(2),
+            ])
+            ->filters([
+                //
+            ])
+            ->headerActions([
+                CreateAction::make()->label('Yangi avtomobil'),
+            ])
+            ->recordActions([
+                ViewAction::make()->iconButton(),
+                EditAction::make()->iconButton(),
+                DeleteAction::make()->iconButton(),
+            ])
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                ]),
+            ])
+            ->emptyStateHeading('Avtomobillar yo\'q')
+            ->emptyStateDescription('Yangi avtomobil qo\'shish uchun yuqoridagi tugmani bosing');
+    }
+}

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Stations\RelationManagers;
 
 use App\Models\Report;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
@@ -22,6 +23,7 @@ use Filament\Tables\Columns\ViewColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
 use Carbon\Carbon;
+use Illuminate\Contracts\View\View;
 
 class ReportsRelationManager extends RelationManager
 {
@@ -29,6 +31,109 @@ class ReportsRelationManager extends RelationManager
     protected static ?string $title = 'Hisobotlar';
     protected static ?string $modelLabel = 'Hisobot';
     protected static ?string $pluralModelLabel = 'Hisobotlar';
+
+    public string $cmpType = 'yuk_ortilishi';
+    public string $cmpMonth1 = '';
+    public string $cmpMonth2 = '';
+    public array $cmpResult = [];
+    public bool $cmpShowResults = false;
+    public array $cmpAvailableMonths = [];
+
+    public function isReadOnly(): bool
+    {
+        return false;
+    }
+
+    public function mountComparison(): void
+    {
+        $this->cmpResult = [];
+        $this->cmpShowResults = false;
+        $this->cmpMonth1 = '';
+        $this->cmpMonth2 = '';
+        $this->loadAvailableMonths();
+    }
+
+    public function updatedCmpType(): void
+    {
+        $this->cmpMonth1 = '';
+        $this->cmpMonth2 = '';
+        $this->cmpResult = [];
+        $this->cmpShowResults = false;
+        $this->loadAvailableMonths();
+    }
+
+    public function loadAvailableMonths(): void
+    {
+        $stationId = $this->getOwnerRecord()->id;
+        $monthNames = [1=>'Yanvar',2=>'Fevral',3=>'Mart',4=>'Aprel',5=>'May',6=>'Iyun',7=>'Iyul',8=>'Avgust',9=>'Sentabr',10=>'Oktabr',11=>'Noyabr',12=>'Dekabr'];
+
+        $dates = Report::where('station_id', $stationId)
+            ->where('type', $this->cmpType)
+            ->orderBy('date', 'desc')
+            ->pluck('date')
+            ->map(fn ($d) => Carbon::parse($d)->format('Y-m'))
+            ->unique()
+            ->values();
+
+        $this->cmpAvailableMonths = [];
+        foreach ($dates as $ym) {
+            $parts = explode('-', $ym);
+            $this->cmpAvailableMonths[$ym] = $monthNames[(int)$parts[1]] . ' ' . $parts[0];
+        }
+
+        if ($dates->count() >= 2) {
+            $this->cmpMonth1 = $dates[1];
+            $this->cmpMonth2 = $dates[0];
+        } elseif ($dates->count() === 1) {
+            $this->cmpMonth1 = $dates[0];
+            $this->cmpMonth2 = $dates[0];
+        }
+    }
+
+    public function runComparison(): void
+    {
+        if (!$this->cmpMonth1 || !$this->cmpMonth2) {
+            return;
+        }
+
+        $stationId = $this->getOwnerRecord()->id;
+
+        $report1 = Report::where('station_id', $stationId)
+            ->where('type', $this->cmpType)
+            ->whereYear('date', substr($this->cmpMonth1, 0, 4))
+            ->whereMonth('date', substr($this->cmpMonth1, 5, 2))
+            ->first();
+
+        $report2 = Report::where('station_id', $stationId)
+            ->where('type', $this->cmpType)
+            ->whereYear('date', substr($this->cmpMonth2, 0, 4))
+            ->whereMonth('date', substr($this->cmpMonth2, 5, 2))
+            ->first();
+
+        $pct = function ($v1, $v2) {
+            if ($v1 == 0) return $v2 > 0 ? '+100%' : '0%';
+            $p = (($v2 - $v1) / $v1) * 100;
+            return ($p >= 0 ? '+' : '') . number_format($p, 1) . '%';
+        };
+
+        if ($this->cmpType === 'xarajat_daromad') {
+            $e1 = $report1->expense ?? 0; $e2 = $report2->expense ?? 0;
+            $i1 = $report1->income ?? 0; $i2 = $report2->income ?? 0;
+            $this->cmpResult = [
+                ['label' => 'Xarajat', 'v1' => $e1, 'v2' => $e2, 'pct' => $pct($e1, $e2)],
+                ['label' => 'Daromad', 'v1' => $i1, 'v2' => $i2, 'pct' => $pct($i1, $i2)],
+            ];
+        } else {
+            $p1 = $report1->planned_value ?? 0; $p2 = $report2->planned_value ?? 0;
+            $a1 = $report1->actual_value ?? 0; $a2 = $report2->actual_value ?? 0;
+            $this->cmpResult = [
+                ['label' => 'Reja', 'v1' => $p1, 'v2' => $p2, 'pct' => $pct($p1, $p2)],
+                ['label' => 'Haqiqiy', 'v1' => $a1, 'v2' => $a2, 'pct' => $pct($a1, $a2)],
+            ];
+        }
+
+        $this->cmpShowResults = true;
+    }
 
     public function form(Schema $schema): Schema
     {
@@ -120,62 +225,37 @@ class ReportsRelationManager extends RelationManager
                 TextColumn::make('type')
                     ->label('Turi')
                     ->formatStateUsing(fn ($state) => match ($state) {
-                        'yuk_ortilishi'   => '📦 Oylik yuk ortilishi',
-                        'yuk_tushurilishi'=> '📤 Oylik yuk tushurilishi',
-                        'pul_tushumi'    => '💰 Oylik pul tushumi',
-                        'xarajat_daromad'=> '📊 Oylik xarajat va daromad',
-                        default          => '📋 Boshqalar',
-                    }),
-                    
+                        'yuk_ortilishi'   => 'Yuk ortilishi',
+                        'yuk_tushurilishi'=> 'Yuk tushurilishi',
+                        'pul_tushumi'    => 'Pul tushumi',
+                        'xarajat_daromad'=> 'Xarajat/Daromad',
+                        default          => 'Boshqa',
+                    })
+                    ->wrap(),
+
                 TextColumn::make('date')
                     ->label('Sana')
-                    ->date('d.m.Y')
+                    ->date('m.Y')
                     ->sortable(),
-
-                ViewColumn::make('chart')
-                    ->label('Grafik')
-                    ->view('filament.tables.columns.report-chart')
-                    ->alignCenter()
-                    ->disableClick()
-                    ->extraCellAttributes(['style' => 'height: 100px; vertical-align: middle;'])
-                    ->sortable(false),
 
                 TextColumn::make('planned_value')
                     ->label('Reja')
-                    ->formatStateUsing(function ($state, $record) {
-                        if (!$state) return '-';
-                        $formatted = number_format($state, 0, '.', ' ');
-                        $unit = match($record->type) {
-                            'pul_tushumi' => " so'm",
-                            'yuk_ortilishi', 'yuk_tushurilishi' => ' dona / vagon',
-                            default => ''
-                        };
-                        return $formatted . $unit;
-                    })
+                    ->formatStateUsing(fn ($state) => $state ? number_format($state, 0, '.', ' ') : '-')
                     ->sortable(),
 
                 TextColumn::make('actual_value')
                     ->label('Haqiqiy')
-                    ->formatStateUsing(function ($state, $record) {
-                        if (!$state) return '-';
-                        $formatted = number_format($state, 0, '.', ' ');
-                        $unit = match($record->type) {
-                            'pul_tushumi' => " so'm",
-                            'yuk_ortilishi', 'yuk_tushurilishi' => ' dona / vagon',
-                            default => ''
-                        };
-                        return $formatted . $unit;
-                    })
+                    ->formatStateUsing(fn ($state) => $state ? number_format($state, 0, '.', ' ') : '-')
                     ->sortable(),
 
                 TextColumn::make('expense')
                     ->label('Xarajat')
-                    ->formatStateUsing(fn ($state) => $state ? number_format($state, 0, '.', ' ') . " so'm" : '-')
+                    ->formatStateUsing(fn ($state) => $state ? number_format($state, 0, '.', ' ') : '-')
                     ->sortable(),
 
                 TextColumn::make('income')
                     ->label('Daromad')
-                    ->formatStateUsing(fn ($state) => $state ? number_format($state, 0, '.', ' ') . " so'm" : '-')
+                    ->formatStateUsing(fn ($state) => $state ? number_format($state, 0, '.', ' ') : '-')
                     ->sortable(),
 
                 TextColumn::make('percentage')
@@ -281,6 +361,23 @@ class ReportsRelationManager extends RelationManager
             ->filtersFormColumns(3)
             ->deferFilters(false)
             ->headerActions([
+                Action::make('compare')
+                    ->label('Taqqoslash')
+                    ->icon('heroicon-o-scale')
+                    ->color('info')
+                    ->modalHeading('Oylik hisobotlarni taqqoslash')
+                    ->modalWidth('4xl')
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Yopish')
+                    ->mountUsing(fn () => $this->mountComparison())
+                    ->modalContent(fn () => view('filament.modals.reports-comparison', [
+                        'monthOptions' => $this->cmpAvailableMonths,
+                        'cmpType' => $this->cmpType,
+                        'cmpMonth1' => $this->cmpMonth1,
+                        'cmpMonth2' => $this->cmpMonth2,
+                        'cmpResult' => $this->cmpResult,
+                        'cmpShowResults' => $this->cmpShowResults,
+                    ])),
                 CreateAction::make()
                     ->label('Yangi hisobot')
                     ->icon('heroicon-o-plus')
@@ -289,20 +386,18 @@ class ReportsRelationManager extends RelationManager
                     ->createAnother(false)
                     ->successNotificationTitle('Hisobot yaratildi'),
             ])
-            ->actions([
+            ->recordActions([
                 EditAction::make()
-                    ->label('Tahrirlash')
                     ->modalHeading('Hisobotni tahrirlash')
                     ->modalWidth('lg')
                     ->successNotificationTitle('Hisobot yangilandi')
-                    ->button(),
+                    ->iconButton(),
 
                 DeleteAction::make()
-                    ->label('O\'chirish')
                     ->modalHeading('Hisobotni o\'chirish')
                     ->modalDescription('Haqiqatan ham o\'chirmoqchimisiz?')
                     ->successNotificationTitle('Hisobot o\'chirildi')
-                    ->button(),
+                    ->iconButton(),
             ])
             ->bulkActions([
                 BulkActionGroup::make([
