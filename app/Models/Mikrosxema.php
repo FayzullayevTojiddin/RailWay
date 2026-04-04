@@ -12,7 +12,6 @@ class Mikrosxema extends Model
         'nomi',
         'texnik_holati',
         'biriktirilgan_joyi',
-        'biriktirilgan_shaxs',
         'rasmlar',
     ];
 
