@@ -40,6 +40,7 @@ class MikrosxemaExport implements FromCollection, WithHeadings, WithStyles, With
             '№',
             'Nomi',
             'Texnik holati',
+            'Biriktirilgan joyi',
         ];
     }
 
@@ -51,6 +52,7 @@ class MikrosxemaExport implements FromCollection, WithHeadings, WithStyles, With
             $this->row,
             $mikrosxema->nomi,
             $mikrosxema->texnik_holati,
+            $mikrosxema->biriktirilgan_joyi,
         ];
     }
 
@@ -60,6 +62,7 @@ class MikrosxemaExport implements FromCollection, WithHeadings, WithStyles, With
             'A' => 6,
             'B' => 30,
             'C' => 25,
+            'D' => 25,
         ];
     }
 
@@ -67,11 +70,11 @@ class MikrosxemaExport implements FromCollection, WithHeadings, WithStyles, With
     {
         $lastRow = max($sheet->getHighestRow(), 2);
 
-        $sheet->getStyle("A1:C1")->getFill()
+        $sheet->getStyle("A1:D1")->getFill()
             ->setFillType(Fill::FILL_SOLID)
             ->getStartColor()->setRGB('2E75B6');
 
-        $sheet->getStyle("A1:C1")->getFont()
+        $sheet->getStyle("A1:D1")->getFont()
             ->setBold(true)
             ->setSize(11)
             ->getColor()->setRGB('FFFFFF');
@@ -82,12 +85,12 @@ class MikrosxemaExport implements FromCollection, WithHeadings, WithStyles, With
                 ->getStartColor()->setRGB('D6E4F0');
         }
 
-        $sheet->getStyle("A1:C{$lastRow}")->getBorders()->getAllBorders()
+        $sheet->getStyle("A1:D{$lastRow}")->getBorders()->getAllBorders()
             ->setBorderStyle(Border::BORDER_THIN)
             ->getColor()->setRGB('B4C6E7');
 
         return [
-            "A1:C{$lastRow}" => [
+            "A1:D{$lastRow}" => [
                 'alignment' => [
                     'horizontal' => Alignment::HORIZONTAL_CENTER,
                     'vertical' => Alignment::VERTICAL_CENTER,

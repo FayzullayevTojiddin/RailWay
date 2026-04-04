@@ -25,14 +25,15 @@ class MikrosxemaTemplateExport implements FromArray, WithHeadings, WithStyles, W
             '№',
             'Nomi',
             'Texnik holati',
+            'Biriktirilgan joyi',
         ];
     }
 
     public function array(): array
     {
         return [
-            [1, 'Mexanizm nomi', 'Yaxshi'],
-            [2, 'Mexanizm nomi', 'Ishlamoqda'],
+            [1, 'Mexanizm nomi', 'Yaxshi', '1-sexda'],
+            [2, 'Mexanizm nomi', 'Ishlamoqda', '2-sexda'],
         ];
     }
 
@@ -42,6 +43,7 @@ class MikrosxemaTemplateExport implements FromArray, WithHeadings, WithStyles, W
             'A' => 6,
             'B' => 30,
             'C' => 25,
+            'D' => 25,
         ];
     }
 
@@ -49,11 +51,11 @@ class MikrosxemaTemplateExport implements FromArray, WithHeadings, WithStyles, W
     {
         $lastRow = $sheet->getHighestRow();
 
-        $sheet->getStyle("A1:C1")->getFill()
+        $sheet->getStyle("A1:D1")->getFill()
             ->setFillType(Fill::FILL_SOLID)
             ->getStartColor()->setRGB('2E75B6');
 
-        $sheet->getStyle("A1:C1")->getFont()
+        $sheet->getStyle("A1:D1")->getFont()
             ->setBold(true)
             ->setSize(11)
             ->getColor()->setRGB('FFFFFF');
@@ -62,12 +64,12 @@ class MikrosxemaTemplateExport implements FromArray, WithHeadings, WithStyles, W
             ->setFillType(Fill::FILL_SOLID)
             ->getStartColor()->setRGB('D6E4F0');
 
-        $sheet->getStyle("A1:C{$lastRow}")->getBorders()->getAllBorders()
+        $sheet->getStyle("A1:D{$lastRow}")->getBorders()->getAllBorders()
             ->setBorderStyle(Border::BORDER_THIN)
             ->getColor()->setRGB('B4C6E7');
 
         return [
-            "A1:C{$lastRow}" => [
+            "A1:D{$lastRow}" => [
                 'alignment' => [
                     'horizontal' => Alignment::HORIZONTAL_CENTER,
                     'vertical' => Alignment::VERTICAL_CENTER,

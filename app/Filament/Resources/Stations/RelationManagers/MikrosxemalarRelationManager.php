@@ -55,6 +55,9 @@ class MikrosxemalarRelationManager extends RelationManager
                             ->label('Texnik holati')
                             ->required()
                             ->maxLength(255),
+                        TextInput::make('biriktirilgan_joyi')
+                            ->label('Biriktirilgan joyi')
+                            ->maxLength(255),
                     ])
                     ->columns(1),
 
@@ -83,6 +86,10 @@ class MikrosxemalarRelationManager extends RelationManager
                     ->alignCenter(),
                 TextColumn::make('texnik_holati')
                     ->label('Texnik holati')
+                    ->searchable()
+                    ->alignCenter(),
+                TextColumn::make('biriktirilgan_joyi')
+                    ->label('Biriktirilgan joyi')
                     ->searchable()
                     ->alignCenter(),
                 ImageColumn::make('rasmlar')

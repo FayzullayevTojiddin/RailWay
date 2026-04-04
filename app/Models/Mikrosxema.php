@@ -11,6 +11,7 @@ class Mikrosxema extends Model
         'station_id',
         'nomi',
         'texnik_holati',
+        'biriktirilgan_joyi',
         'biriktirilgan_shaxs',
         'rasmlar',
     ];

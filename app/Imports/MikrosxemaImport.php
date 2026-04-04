@@ -22,6 +22,7 @@ class MikrosxemaImport implements ToModel, WithHeadingRow, WithValidation
             'station_id' => $this->stationId,
             'nomi' => $row['nomi'],
             'texnik_holati' => $row['texnik_holati'],
+            'biriktirilgan_joyi' => $row['biriktirilgan_joyi'] ?? null,
         ]);
     }
 
@@ -30,6 +31,7 @@ class MikrosxemaImport implements ToModel, WithHeadingRow, WithValidation
         return [
             'nomi' => 'required|string|max:255',
             'texnik_holati' => 'required|string|max:255',
+            'biriktirilgan_joyi' => 'nullable|string|max:255',
         ];
     }
 }
