@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Stations\RelationManagers;
 
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
@@ -16,13 +17,22 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use App\Enums\StationType;
+use App\Imports\MikrosxemaImport;
+use Illuminate\Database\Eloquent\Model;
+use Maatwebsite\Excel\Facades\Excel;
 
 class MikrosxemalarRelationManager extends RelationManager
 {
     protected static string $relationship = 'mikrosxemalar';
-    protected static ?string $title = 'Mikrosxemalar';
-    protected static ?string $modelLabel = 'Mikrosxema';
-    protected static ?string $pluralModelLabel = 'Mikrosxemalar';
+    protected static ?string $title = 'Kichik mexanizmlar';
+    protected static ?string $modelLabel = 'Kichik mexanizm';
+    protected static ?string $pluralModelLabel = 'Kichik mexanizmlar';
+
+    public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
+    {
+        return $ownerRecord->type === StationType::ENTERPRISE_PCH->value;
+    }
 
     public function isReadOnly(): bool
     {
@@ -33,18 +43,14 @@ class MikrosxemalarRelationManager extends RelationManager
     {
         return $schema
             ->components([
-                Section::make('Mikrosxema ma\'lumotlari')
+                Section::make('Kichik mexanizm ma\'lumotlari')
                     ->schema([
                         TextInput::make('nomi')
                             ->label('Nomi')
                             ->required()
                             ->maxLength(255),
-                        TextInput::make('ishlab_chiqarilgan_joyi')
-                            ->label('Ishlab chiqarilgan joyi')
-                            ->required()
-                            ->maxLength(255),
-                        TextInput::make('biriktirilgan_shaxs')
-                            ->label('Biriktirilgan shaxs')
+                        TextInput::make('texnik_holati')
+                            ->label('Texnik holati')
                             ->required()
                             ->maxLength(255),
                     ])
@@ -73,12 +79,8 @@ class MikrosxemalarRelationManager extends RelationManager
                     ->label('Nomi')
                     ->searchable()
                     ->alignCenter(),
-                TextColumn::make('ishlab_chiqarilgan_joyi')
-                    ->label('Ishlab chiqarilgan joyi')
-                    ->searchable()
-                    ->alignCenter(),
-                TextColumn::make('biriktirilgan_shaxs')
-                    ->label('Biriktirilgan shaxs')
+                TextColumn::make('texnik_holati')
+                    ->label('Texnik holati')
                     ->searchable()
                     ->alignCenter(),
                 ImageColumn::make('rasmlar')
@@ -92,7 +94,33 @@ class MikrosxemalarRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                CreateAction::make()->label('Yangi mikrosxema'),
+                CreateAction::make()->label('Yangi kichik mexanizm'),
+                Action::make('shablon_yuklab_olish')
+                    ->label('Shablon yuklab olish')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->color('info')
+                    ->url(route('mikrosxemalar.template')),
+                Action::make('import')
+                    ->label('Excel Import')
+                    ->icon('heroicon-o-arrow-up-tray')
+                    ->color('success')
+                    ->form([
+                        \Filament\Forms\Components\FileUpload::make('file')
+                            ->label('Excel fayl tanlang')
+                            ->acceptedFileTypes(['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'])
+                            ->required(),
+                    ])
+                    ->action(function (array $data) {
+                        $filePath = storage_path('app/private/' . $data['file']);
+                        Excel::import(
+                            new MikrosxemaImport($this->getOwnerRecord()->id),
+                            $filePath
+                        );
+                        \Filament\Notifications\Notification::make()
+                            ->title('Muvaffaqiyatli import qilindi!')
+                            ->success()
+                            ->send();
+                    }),
             ])
             ->recordActions([
                 ViewAction::make()->iconButton(),
@@ -104,7 +132,7 @@ class MikrosxemalarRelationManager extends RelationManager
                     DeleteBulkAction::make(),
                 ]),
             ])
-            ->emptyStateHeading('Mikrosxemalar yo\'q')
-            ->emptyStateDescription('Yangi mikrosxema qo\'shish uchun yuqoridagi tugmani bosing');
+            ->emptyStateHeading('Kichik mexanizmlar yo\'q')
+            ->emptyStateDescription('Yangi kichik mexanizm qo\'shish uchun yuqoridagi tugmani bosing');
     }
 }

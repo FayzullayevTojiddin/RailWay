@@ -10,7 +10,7 @@ class Mikrosxema extends Model
     protected $fillable = [
         'station_id',
         'nomi',
-        'ishlab_chiqarilgan_joyi',
+        'texnik_holati',
         'biriktirilgan_shaxs',
         'rasmlar',
     ];

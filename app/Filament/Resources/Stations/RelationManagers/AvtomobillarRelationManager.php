@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Stations\RelationManagers;
 
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
@@ -16,6 +17,10 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use App\Enums\StationType;
+use App\Imports\AvtomobilImport;
+use Illuminate\Database\Eloquent\Model;
+use Maatwebsite\Excel\Facades\Excel;
 
 class AvtomobillarRelationManager extends RelationManager
 {
@@ -23,6 +28,13 @@ class AvtomobillarRelationManager extends RelationManager
     protected static ?string $title = 'Avtomobillar';
     protected static ?string $modelLabel = 'Avtomobil';
     protected static ?string $pluralModelLabel = 'Avtomobillar';
+
+    public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
+    {
+        $type = StationType::tryFrom($ownerRecord->type);
+
+        return $type !== null && $type->isEnterprise();
+    }
 
     public function isReadOnly(): bool
     {
@@ -114,6 +126,32 @@ class AvtomobillarRelationManager extends RelationManager
             ])
             ->headerActions([
                 CreateAction::make()->label('Yangi avtomobil'),
+                Action::make('shablon_yuklab_olish')
+                    ->label('Shablon yuklab olish')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->color('info')
+                    ->url(route('avtomobillar.template')),
+                Action::make('import')
+                    ->label('Excel Import')
+                    ->icon('heroicon-o-arrow-up-tray')
+                    ->color('success')
+                    ->form([
+                        \Filament\Forms\Components\FileUpload::make('file')
+                            ->label('Excel fayl tanlang')
+                            ->acceptedFileTypes(['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'])
+                            ->required(),
+                    ])
+                    ->action(function (array $data) {
+                        $filePath = storage_path('app/private/' . $data['file']);
+                        Excel::import(
+                            new AvtomobilImport($this->getOwnerRecord()->id),
+                            $filePath
+                        );
+                        \Filament\Notifications\Notification::make()
+                            ->title('Muvaffaqiyatli import qilindi!')
+                            ->success()
+                            ->send();
+                    }),
             ])
             ->recordActions([
                 ViewAction::make()->iconButton(),
