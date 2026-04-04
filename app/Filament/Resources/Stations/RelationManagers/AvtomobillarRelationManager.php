@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Stations\RelationManagers;
 
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
@@ -18,6 +19,7 @@ use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use App\Enums\StationType;
+use App\Exports\AvtomobilExport;
 use App\Imports\AvtomobilImport;
 use Illuminate\Database\Eloquent\Model;
 use Maatwebsite\Excel\Facades\Excel;
@@ -64,6 +66,9 @@ class AvtomobillarRelationManager extends RelationManager
                         TextInput::make('biriktirilgan_shaxs')
                             ->label('Biriktirilgan shaxs')
                             ->required()
+                            ->maxLength(255),
+                        TextInput::make('texnik_holati')
+                            ->label('Texnik holati')
                             ->maxLength(255),
                     ])
                     ->columns(1),
@@ -114,6 +119,10 @@ class AvtomobillarRelationManager extends RelationManager
                     ->label('Biriktirilgan shaxs')
                     ->searchable()
                     ->alignCenter(),
+                TextColumn::make('texnik_holati')
+                    ->label('Texnik holati')
+                    ->searchable()
+                    ->alignCenter(),
                 ImageColumn::make('rasmlar')
                     ->label('Rasm')
                     ->circular()
@@ -126,32 +135,48 @@ class AvtomobillarRelationManager extends RelationManager
             ])
             ->headerActions([
                 CreateAction::make()->label('Yangi avtomobil'),
-                Action::make('shablon_yuklab_olish')
-                    ->label('Shablon yuklab olish')
-                    ->icon('heroicon-o-arrow-down-tray')
-                    ->color('info')
-                    ->url(route('avtomobillar.template')),
-                Action::make('import')
-                    ->label('Excel Import')
-                    ->icon('heroicon-o-arrow-up-tray')
+                ActionGroup::make([
+                    Action::make('export')
+                        ->label('Export qilish')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->color('primary')
+                        ->action(function () {
+                            return Excel::download(
+                                new AvtomobilExport($this->getOwnerRecord()->id),
+                                'avtomobillar.xlsx'
+                            );
+                        }),
+                    Action::make('shablon_yuklab_olish')
+                        ->label('Shablon yuklab olish')
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->color('info')
+                        ->url(route('avtomobillar.template')),
+                    Action::make('import')
+                        ->label('Import qilish')
+                        ->icon('heroicon-o-arrow-up-tray')
+                        ->color('success')
+                        ->form([
+                            \Filament\Forms\Components\FileUpload::make('file')
+                                ->label('Excel fayl tanlang')
+                                ->acceptedFileTypes(['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'])
+                                ->required(),
+                        ])
+                        ->action(function (array $data) {
+                            $filePath = storage_path('app/private/' . $data['file']);
+                            Excel::import(
+                                new AvtomobilImport($this->getOwnerRecord()->id),
+                                $filePath
+                            );
+                            \Filament\Notifications\Notification::make()
+                                ->title('Muvaffaqiyatli import qilindi!')
+                                ->success()
+                                ->send();
+                        }),
+                ])
+                    ->label('Excel')
+                    ->icon('heroicon-o-document-arrow-down')
                     ->color('success')
-                    ->form([
-                        \Filament\Forms\Components\FileUpload::make('file')
-                            ->label('Excel fayl tanlang')
-                            ->acceptedFileTypes(['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'])
-                            ->required(),
-                    ])
-                    ->action(function (array $data) {
-                        $filePath = storage_path('app/private/' . $data['file']);
-                        Excel::import(
-                            new AvtomobilImport($this->getOwnerRecord()->id),
-                            $filePath
-                        );
-                        \Filament\Notifications\Notification::make()
-                            ->title('Muvaffaqiyatli import qilindi!')
-                            ->success()
-                            ->send();
-                    }),
+                    ->button(),
             ])
             ->recordActions([
                 ViewAction::make()->iconButton(),

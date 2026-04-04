@@ -2,21 +2,36 @@
 
 namespace App\Exports;
 
-use Maatwebsite\Excel\Concerns\FromArray;
+use App\Models\Avtomobil;
+use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
+use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithTitle;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 
-class AvtomobilTemplateExport implements FromArray, WithHeadings, WithStyles, WithColumnWidths, WithTitle
+class AvtomobilExport implements FromCollection, WithHeadings, WithStyles, WithColumnWidths, WithMapping, WithTitle
 {
+    protected int $stationId;
+    protected int $row = 0;
+
+    public function __construct(int $stationId)
+    {
+        $this->stationId = $stationId;
+    }
+
     public function title(): string
     {
         return 'Avtomobillar';
+    }
+
+    public function collection()
+    {
+        return Avtomobil::where('station_id', $this->stationId)->get();
     }
 
     public function headings(): array
@@ -31,11 +46,17 @@ class AvtomobilTemplateExport implements FromArray, WithHeadings, WithStyles, Wi
         ];
     }
 
-    public function array(): array
+    public function map($avtomobil): array
     {
+        $this->row++;
+
         return [
-            [1, 'Damas', '01 A 123 AA', 2020, 'Ism Familiya', 'Yaxshi'],
-            [2, 'Cobalt', '01 B 456 BB', 2022, 'Ism Familiya', 'Ishlamoqda'],
+            $this->row,
+            $avtomobil->rusumi,
+            $avtomobil->davlat_raqami,
+            $avtomobil->ishlab_chiqarilgan_yili,
+            $avtomobil->biriktirilgan_shaxs,
+            $avtomobil->texnik_holati,
         ];
     }
 
@@ -53,7 +74,7 @@ class AvtomobilTemplateExport implements FromArray, WithHeadings, WithStyles, Wi
 
     public function styles(Worksheet $sheet): array
     {
-        $lastRow = $sheet->getHighestRow();
+        $lastRow = max($sheet->getHighestRow(), 2);
 
         $sheet->getStyle("A1:F1")->getFill()
             ->setFillType(Fill::FILL_SOLID)
@@ -64,9 +85,11 @@ class AvtomobilTemplateExport implements FromArray, WithHeadings, WithStyles, Wi
             ->setSize(11)
             ->getColor()->setRGB('FFFFFF');
 
-        $sheet->getStyle("A2:E{$lastRow}")->getFill()
-            ->setFillType(Fill::FILL_SOLID)
-            ->getStartColor()->setRGB('D6E4F0');
+        if ($lastRow > 1) {
+            $sheet->getStyle("A2:F{$lastRow}")->getFill()
+                ->setFillType(Fill::FILL_SOLID)
+                ->getStartColor()->setRGB('D6E4F0');
+        }
 
         $sheet->getStyle("A1:F{$lastRow}")->getBorders()->getAllBorders()
             ->setBorderStyle(Border::BORDER_THIN)

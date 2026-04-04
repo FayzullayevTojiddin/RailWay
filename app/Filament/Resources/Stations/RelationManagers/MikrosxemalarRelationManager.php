@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Stations\RelationManagers;
 
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
@@ -18,6 +19,7 @@ use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use App\Enums\StationType;
+use App\Exports\MikrosxemaExport;
 use App\Imports\MikrosxemaImport;
 use Illuminate\Database\Eloquent\Model;
 use Maatwebsite\Excel\Facades\Excel;
@@ -95,32 +97,48 @@ class MikrosxemalarRelationManager extends RelationManager
             ])
             ->headerActions([
                 CreateAction::make()->label('Yangi kichik mexanizm'),
-                Action::make('shablon_yuklab_olish')
-                    ->label('Shablon yuklab olish')
-                    ->icon('heroicon-o-arrow-down-tray')
-                    ->color('info')
-                    ->url(route('mikrosxemalar.template')),
-                Action::make('import')
-                    ->label('Excel Import')
-                    ->icon('heroicon-o-arrow-up-tray')
+                ActionGroup::make([
+                    Action::make('export')
+                        ->label('Export qilish')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->color('primary')
+                        ->action(function () {
+                            return Excel::download(
+                                new MikrosxemaExport($this->getOwnerRecord()->id),
+                                'kichik_mexanizmlar.xlsx'
+                            );
+                        }),
+                    Action::make('shablon_yuklab_olish')
+                        ->label('Shablon yuklab olish')
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->color('info')
+                        ->url(route('mikrosxemalar.template')),
+                    Action::make('import')
+                        ->label('Import qilish')
+                        ->icon('heroicon-o-arrow-up-tray')
+                        ->color('success')
+                        ->form([
+                            \Filament\Forms\Components\FileUpload::make('file')
+                                ->label('Excel fayl tanlang')
+                                ->acceptedFileTypes(['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'])
+                                ->required(),
+                        ])
+                        ->action(function (array $data) {
+                            $filePath = storage_path('app/private/' . $data['file']);
+                            Excel::import(
+                                new MikrosxemaImport($this->getOwnerRecord()->id),
+                                $filePath
+                            );
+                            \Filament\Notifications\Notification::make()
+                                ->title('Muvaffaqiyatli import qilindi!')
+                                ->success()
+                                ->send();
+                        }),
+                ])
+                    ->label('Excel')
+                    ->icon('heroicon-o-document-arrow-down')
                     ->color('success')
-                    ->form([
-                        \Filament\Forms\Components\FileUpload::make('file')
-                            ->label('Excel fayl tanlang')
-                            ->acceptedFileTypes(['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'])
-                            ->required(),
-                    ])
-                    ->action(function (array $data) {
-                        $filePath = storage_path('app/private/' . $data['file']);
-                        Excel::import(
-                            new MikrosxemaImport($this->getOwnerRecord()->id),
-                            $filePath
-                        );
-                        \Filament\Notifications\Notification::make()
-                            ->title('Muvaffaqiyatli import qilindi!')
-                            ->success()
-                            ->send();
-                    }),
+                    ->button(),
             ])
             ->recordActions([
                 ViewAction::make()->iconButton(),

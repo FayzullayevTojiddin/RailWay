@@ -24,6 +24,7 @@ class AvtomobilImport implements ToModel, WithHeadingRow, WithValidation
             'davlat_raqami' => $row['davlat_raqami'],
             'ishlab_chiqarilgan_yili' => $row['ishlab_chiqarilgan_yili'],
             'biriktirilgan_shaxs' => $row['biriktirilgan_shaxs'],
+            'texnik_holati' => $row['texnik_holati'] ?? null,
         ]);
     }
 
@@ -34,6 +35,7 @@ class AvtomobilImport implements ToModel, WithHeadingRow, WithValidation
             'davlat_raqami' => 'required|string|max:255',
             'ishlab_chiqarilgan_yili' => 'required|numeric|min:1950|max:' . date('Y'),
             'biriktirilgan_shaxs' => 'required|string|max:255',
+            'texnik_holati' => 'nullable|string|max:255',
         ];
     }
 }

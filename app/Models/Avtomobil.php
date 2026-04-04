@@ -13,6 +13,7 @@ class Avtomobil extends Model
         'davlat_raqami',
         'ishlab_chiqarilgan_yili',
         'biriktirilgan_shaxs',
+        'texnik_holati',
         'rasmlar',
         'texpassport_old',
         'texpassport_orqa',
