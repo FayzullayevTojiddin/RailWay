@@ -49,9 +49,7 @@ class ViewStation extends ViewRecord
 
     protected function getFooterWidgets(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public function getTitle(): string

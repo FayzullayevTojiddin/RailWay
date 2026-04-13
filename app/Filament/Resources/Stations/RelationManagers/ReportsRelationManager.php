@@ -222,40 +222,47 @@ class ReportsRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('type')
             ->columns([
-                TextColumn::make('type')
-                    ->label('Turi')
-                    ->formatStateUsing(fn ($state) => match ($state) {
-                        'yuk_ortilishi'   => 'Yuk ortilishi',
-                        'yuk_tushurilishi'=> 'Yuk tushurilishi',
-                        'pul_tushumi'    => 'Pul tushumi',
-                        'xarajat_daromad'=> 'Xarajat/Daromad',
-                        default          => 'Boshqa',
-                    })
-                    ->wrap(),
-
                 TextColumn::make('date')
                     ->label('Sana')
                     ->date('m.Y')
                     ->sortable(),
 
+                ViewColumn::make('chart')
+                    ->label('Diagramma')
+                    ->view('filament.resources.stations.relation-managers.columns.report-chart'),
+
                 TextColumn::make('planned_value')
                     ->label('Reja')
-                    ->formatStateUsing(fn ($state) => $state ? number_format($state, 0, '.', ' ') : '-')
+                    ->formatStateUsing(function ($state, $record) {
+                        if (!$state) return '-';
+                        $formatted = number_format($state, 0, '.', ' ');
+                        if ($record->type === 'xarajat_daromad') {
+                            return $formatted . ' so\'m';
+                        }
+                        return $formatted . ' dona/vagon';
+                    })
                     ->sortable(),
 
                 TextColumn::make('actual_value')
                     ->label('Haqiqiy')
-                    ->formatStateUsing(fn ($state) => $state ? number_format($state, 0, '.', ' ') : '-')
+                    ->formatStateUsing(function ($state, $record) {
+                        if (!$state) return '-';
+                        $formatted = number_format($state, 0, '.', ' ');
+                        if ($record->type === 'xarajat_daromad') {
+                            return $formatted . ' so\'m';
+                        }
+                        return $formatted . ' dona/vagon';
+                    })
                     ->sortable(),
 
                 TextColumn::make('expense')
                     ->label('Xarajat')
-                    ->formatStateUsing(fn ($state) => $state ? number_format($state, 0, '.', ' ') : '-')
+                    ->formatStateUsing(fn ($state) => $state ? number_format($state, 0, '.', ' ') . ' so\'m' : '-')
                     ->sortable(),
 
                 TextColumn::make('income')
                     ->label('Daromad')
-                    ->formatStateUsing(fn ($state) => $state ? number_format($state, 0, '.', ' ') : '-')
+                    ->formatStateUsing(fn ($state) => $state ? number_format($state, 0, '.', ' ') . ' so\'m' : '-')
                     ->sortable(),
 
                 TextColumn::make('percentage')
@@ -264,14 +271,14 @@ class ReportsRelationManager extends RelationManager
                         if ($record->type === 'xarajat_daromad') {
                             $expense = $record->expense ?? 0;
                             $income = $record->income ?? 0;
-                            
+
                             if ($expense == 0) {
                                 return $income > 0 ? '+100%' : '0%';
                             }
-                            
+
                             $profit = $income - $expense;
                             $profitPercent = ($profit / $expense) * 100;
-                            
+
                             $sign = $profitPercent >= 0 ? '+' : '';
                             return $sign . number_format($profitPercent, 1) . '%';
                         } else {
@@ -285,14 +292,14 @@ class ReportsRelationManager extends RelationManager
                         if ($record->type === 'xarajat_daromad') {
                             $expense = $record->expense ?? 0;
                             $income = $record->income ?? 0;
-                            
+
                             if ($expense == 0) {
                                 return $income > 0 ? 'success' : 'gray';
                             }
-                            
+
                             $profit = $income - $expense;
                             $profitPercent = ($profit / $expense) * 100;
-                            
+
                             if ($profitPercent >= 50) return 'success';
                             if ($profitPercent >= 0) return 'warning';
                             if ($profitPercent >= -20) return 'danger';

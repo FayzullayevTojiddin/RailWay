@@ -7,8 +7,6 @@ use Filament\Resources\Pages\EditRecord;
 use App\Livewire\EmployeesGenderChartWidget;
 use App\Livewire\EmployeesCategoryChartWidget;
 use App\Livewire\CadastreAreaChartWidget;
-use App\Filament\Resources\Stations\RelationManagers\Widgets\ReportsWidget;
-
 class EditStation extends EditRecord
 {
     protected static string $resource = StationResource::class;
@@ -29,8 +27,6 @@ class EditStation extends EditRecord
 
     public function getFooterWidgets(): array
     {
-        return [
-            // ReportsWidget::class,
-        ];
+        return [];
     }
 }

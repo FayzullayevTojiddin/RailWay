@@ -7,9 +7,9 @@ use Filament\Widgets\Widget;
 class ReportsWidget extends Widget
 {
     protected string $view = 'filament.resources.stations.relation-managers.widgets.reports-widget';
-    
+
     protected int | string | array $columnSpan = 'full';
-    
+
     public ?string $selectedType = 'yuk_ortilishi';
     public ?int $stationId = null;
 
