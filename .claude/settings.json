@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php database/seed_fake_reports_42.php)",
+      "Bash(git add *)"
+    ]
+  }
+}
