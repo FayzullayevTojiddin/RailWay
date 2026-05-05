@@ -17,11 +17,14 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
 use App\Enums\StationType;
 use App\Exports\MikrosxemaExport;
 use App\Imports\MikrosxemaImport;
+use App\Models\Mikrosxema;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\HtmlString;
 use Maatwebsite\Excel\Facades\Excel;
 
 class MikrosxemalarRelationManager extends RelationManager
@@ -77,8 +80,73 @@ class MikrosxemalarRelationManager extends RelationManager
 
     public function table(Table $table): Table
     {
+        $stationId = $this->getOwnerRecord()->id;
+
+        $counts = Mikrosxema::query()
+            ->where('station_id', $stationId)
+            ->selectRaw('nomi, texnik_holati, COUNT(*) as c')
+            ->groupBy('nomi', 'texnik_holati')
+            ->get()
+            ->groupBy('nomi')
+            ->map(function ($rows) {
+                $soz = (int) ($rows->firstWhere('texnik_holati', 'soz')->c ?? 0);
+                $nosoz = (int) ($rows->firstWhere('texnik_holati', 'nosoz')->c ?? 0);
+                return ['soz' => $soz, 'nosoz' => $nosoz, 'total' => $soz + $nosoz];
+            });
+
         return $table
             ->recordTitleAttribute('nomi')
+            ->groups([
+                Group::make('nomi')
+                    ->label('Nomi')
+                    ->titlePrefixedWithLabel(false)
+                    ->getDescriptionFromRecordUsing(function ($record) use ($counts) {
+                        $c = $counts[$record->nomi] ?? ['soz' => 0, 'nosoz' => 0, 'total' => 0];
+                        $sozPct = $c['total'] > 0 ? round(($c['soz'] / $c['total']) * 100) : 0;
+                        $nosozPct = 100 - $sozPct;
+
+                        $wrap = 'display:flex;align-items:center;justify-content:space-between;width:100%;margin-top:10px;padding-right:32px;gap:32px;flex-wrap:wrap';
+                        $stats = 'display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap';
+                        $pillBase = 'display:inline-flex;align-items:center;gap:8px;padding:5px 12px;border-radius:999px;font-size:12px;line-height:1;border:1px solid';
+                        $num = 'font-weight:700;font-size:13px;font-variant-numeric:tabular-nums;letter-spacing:.2px';
+                        $lbl = 'text-transform:uppercase;font-size:10px;letter-spacing:.7px;font-weight:600;opacity:.85';
+
+                        $totalPill = $pillBase . ';background:rgba(148,163,184,.10);border-color:rgba(148,163,184,.25);color:#e2e8f0';
+                        $sozPill = $c['soz'] > 0
+                            ? $pillBase . ';background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.30);color:#4ade80'
+                            : $pillBase . ';background:rgba(100,116,139,.10);border-color:rgba(100,116,139,.25);color:#94a3b8';
+                        $nosozPill = $c['nosoz'] > 0
+                            ? $pillBase . ';background:rgba(248,113,113,.12);border-color:rgba(248,113,113,.30);color:#f87171'
+                            : $pillBase . ';background:rgba(100,116,139,.10);border-color:rgba(100,116,139,.25);color:#94a3b8';
+
+                        $chartBg = $c['nosoz'] > 0 ? 'rgba(248,113,113,.55)' : 'rgba(100,116,139,.3)';
+                        $chartFg = '#22c55e';
+
+                        return new HtmlString(
+                            '<style>.fi-ta-group-header>div:not(.fi-ta-group-checkbox-ctn){flex:1 1 auto;min-width:0}.fi-ta-group-description{display:block;width:100%}</style>'
+                            . '<span style="' . $wrap . '">'
+                            . '<span style="' . $stats . '">'
+                                . '<span style="' . $totalPill . '"><span style="' . $num . '">' . $c['total'] . '</span><span style="' . $lbl . '">jami</span></span>'
+                                . '<span style="' . $sozPill . '"><span style="' . $num . '">' . $c['soz'] . '</span><span style="' . $lbl . '">soz</span></span>'
+                                . '<span style="' . $nosozPill . '"><span style="' . $num . '">' . $c['nosoz'] . '</span><span style="' . $lbl . '">nosoz</span></span>'
+                            . '</span>'
+                            . '<span style="position:relative;width:42px;height:42px;flex-shrink:0;display:inline-block;margin-left:auto">'
+                                . '<svg width="42" height="42" viewBox="0 0 42 42" style="display:block">'
+                                    . '<circle cx="21" cy="21" r="17" fill="none" stroke="' . $chartBg . '" stroke-width="5"/>'
+                                    . ($c['soz'] > 0
+                                        ? '<circle cx="21" cy="21" r="17" fill="none" stroke="' . $chartFg . '" stroke-width="5" pathLength="100" stroke-dasharray="' . $sozPct . ' ' . $nosozPct . '" stroke-linecap="round" transform="rotate(-90 21 21)"/>'
+                                        : '')
+                                . '</svg>'
+                                . '<span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#e2e8f0;font-variant-numeric:tabular-nums">' . $sozPct . '%</span>'
+                            . '</span>'
+                            . '</span>'
+                        );
+                    })
+                    ->collapsible(),
+            ])
+            ->defaultGroup('nomi')
+            ->collapsedGroupsByDefault()
+            ->paginated(false)
             ->columns([
                 TextColumn::make('nomi')
                     ->label('Nomi')
@@ -98,9 +166,6 @@ class MikrosxemalarRelationManager extends RelationManager
                     ->stacked()
                     ->alignCenter()
                     ->limit(2),
-            ])
-            ->filters([
-                //
             ])
             ->headerActions([
                 CreateAction::make()->label('Yangi kichik mexanizm'),
@@ -125,7 +190,7 @@ class MikrosxemalarRelationManager extends RelationManager
                         ->icon('heroicon-o-arrow-up-tray')
                         ->color('success')
                         ->form([
-                            \Filament\Forms\Components\FileUpload::make('file')
+                            FileUpload::make('file')
                                 ->label('Excel fayl tanlang')
                                 ->acceptedFileTypes(['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'])
                                 ->required(),

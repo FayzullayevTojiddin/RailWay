@@ -33,8 +33,8 @@ class ReportsRelationManager extends RelationManager
     protected static ?string $pluralModelLabel = 'Hisobotlar';
 
     public string $cmpType = 'yuk_ortilishi';
-    public string $cmpMonth1 = '';
-    public string $cmpMonth2 = '';
+    public array $cmpMonthsA = [];
+    public array $cmpMonthsB = [];
     public array $cmpResult = [];
     public bool $cmpShowResults = false;
     public array $cmpAvailableMonths = [];
@@ -48,15 +48,15 @@ class ReportsRelationManager extends RelationManager
     {
         $this->cmpResult = [];
         $this->cmpShowResults = false;
-        $this->cmpMonth1 = '';
-        $this->cmpMonth2 = '';
+        $this->cmpMonthsA = [];
+        $this->cmpMonthsB = [];
         $this->loadAvailableMonths();
     }
 
     public function updatedCmpType(): void
     {
-        $this->cmpMonth1 = '';
-        $this->cmpMonth2 = '';
+        $this->cmpMonthsA = [];
+        $this->cmpMonthsB = [];
         $this->cmpResult = [];
         $this->cmpShowResults = false;
         $this->loadAvailableMonths();
@@ -82,55 +82,78 @@ class ReportsRelationManager extends RelationManager
         }
 
         if ($dates->count() >= 2) {
-            $this->cmpMonth1 = $dates[1];
-            $this->cmpMonth2 = $dates[0];
+            $this->cmpMonthsA = [$dates[1]];
+            $this->cmpMonthsB = [$dates[0]];
         } elseif ($dates->count() === 1) {
-            $this->cmpMonth1 = $dates[0];
-            $this->cmpMonth2 = $dates[0];
+            $this->cmpMonthsA = [$dates[0]];
+            $this->cmpMonthsB = [];
         }
     }
 
     public function runComparison(): void
     {
-        if (!$this->cmpMonth1 || !$this->cmpMonth2) {
+        if (empty($this->cmpMonthsA) || empty($this->cmpMonthsB)) {
             return;
         }
 
         $stationId = $this->getOwnerRecord()->id;
 
-        $report1 = Report::where('station_id', $stationId)
-            ->where('type', $this->cmpType)
-            ->whereYear('date', substr($this->cmpMonth1, 0, 4))
-            ->whereMonth('date', substr($this->cmpMonth1, 5, 2))
-            ->first();
+        $monthsA = collect($this->cmpMonthsA)->unique()->sort()->values()->toArray();
+        $monthsB = collect($this->cmpMonthsB)->unique()->sort()->values()->toArray();
 
-        $report2 = Report::where('station_id', $stationId)
-            ->where('type', $this->cmpType)
-            ->whereYear('date', substr($this->cmpMonth2, 0, 4))
-            ->whereMonth('date', substr($this->cmpMonth2, 5, 2))
-            ->first();
+        $metrics = $this->cmpType === 'xarajat_daromad'
+            ? [['label' => 'Xarajat', 'field' => 'expense'], ['label' => 'Daromad', 'field' => 'income']]
+            : [['label' => 'Reja', 'field' => 'planned_value'], ['label' => 'Haqiqiy', 'field' => 'actual_value']];
 
-        $pct = function ($v1, $v2) {
-            if ($v1 == 0) return $v2 > 0 ? '+100%' : '0%';
-            $p = (($v2 - $v1) / $v1) * 100;
+        $sumGroup = function (array $months, string $field) use ($stationId) {
+            if (empty($months)) return 0.0;
+            $total = 0.0;
+            foreach ($months as $ym) {
+                $report = Report::where('station_id', $stationId)
+                    ->where('type', $this->cmpType)
+                    ->whereYear('date', substr($ym, 0, 4))
+                    ->whereMonth('date', substr($ym, 5, 2))
+                    ->first();
+                $total += (float) ($report?->{$field} ?? 0);
+            }
+            return $total;
+        };
+
+        $pct = function ($baseline, $current) {
+            if ($baseline == 0) return $current > 0 ? '+100%' : '0%';
+            $p = (($current - $baseline) / $baseline) * 100;
             return ($p >= 0 ? '+' : '') . number_format($p, 1) . '%';
         };
 
-        if ($this->cmpType === 'xarajat_daromad') {
-            $e1 = $report1->expense ?? 0; $e2 = $report2->expense ?? 0;
-            $i1 = $report1->income ?? 0; $i2 = $report2->income ?? 0;
-            $this->cmpResult = [
-                ['label' => 'Xarajat', 'v1' => $e1, 'v2' => $e2, 'pct' => $pct($e1, $e2)],
-                ['label' => 'Daromad', 'v1' => $i1, 'v2' => $i2, 'pct' => $pct($i1, $i2)],
-            ];
-        } else {
-            $p1 = $report1->planned_value ?? 0; $p2 = $report2->planned_value ?? 0;
-            $a1 = $report1->actual_value ?? 0; $a2 = $report2->actual_value ?? 0;
-            $this->cmpResult = [
-                ['label' => 'Reja', 'v1' => $p1, 'v2' => $p2, 'pct' => $pct($p1, $p2)],
-                ['label' => 'Haqiqiy', 'v1' => $a1, 'v2' => $a2, 'pct' => $pct($a1, $a2)],
+        $labelA = collect($monthsA)->map(fn ($ym) => $this->cmpAvailableMonths[$ym] ?? $ym)->join(', ');
+        $labelB = collect($monthsB)->map(fn ($ym) => $this->cmpAvailableMonths[$ym] ?? $ym)->join(', ');
+
+        $this->cmpResult = [];
+        foreach ($metrics as $metric) {
+            $sumA = $sumGroup($monthsA, $metric['field']);
+            $sumB = $sumGroup($monthsB, $metric['field']);
+            $diff = $sumB - $sumA;
+
+            $this->cmpResult[] = [
+                'label' => $metric['label'],
+                'sumA' => $sumA,
+                'sumB' => $sumB,
+                'avgA' => count($monthsA) > 0 ? $sumA / count($monthsA) : 0,
+                'avgB' => count($monthsB) > 0 ? $sumB / count($monthsB) : 0,
+                'diff' => $diff,
+                'pct' => $pct($sumA, $sumB),
+                'countA' => count($monthsA),
+                'countB' => count($monthsB),
             ];
         }
+
+        $this->cmpResult = [
+            'metrics' => $this->cmpResult,
+            'labelA' => $labelA,
+            'labelB' => $labelB,
+            'countA' => count($monthsA),
+            'countB' => count($monthsB),
+        ];
 
         $this->cmpShowResults = true;
     }
@@ -326,6 +349,7 @@ class ReportsRelationManager extends RelationManager
                     }),
             ])
             ->defaultSort('date', 'desc')
+            ->modifyQueryUsing(fn (Builder $query) => $query->orderBy('date', 'desc')->orderBy('id', 'desc'))
             ->filters([
                 SelectFilter::make('type')
                     ->label('Hisobot turi')
@@ -392,8 +416,8 @@ class ReportsRelationManager extends RelationManager
                     ->modalContent(fn () => view('filament.modals.reports-comparison', [
                         'monthOptions' => $this->cmpAvailableMonths,
                         'cmpType' => $this->cmpType,
-                        'cmpMonth1' => $this->cmpMonth1,
-                        'cmpMonth2' => $this->cmpMonth2,
+                        'cmpMonthsA' => $this->cmpMonthsA,
+                        'cmpMonthsB' => $this->cmpMonthsB,
                         'cmpResult' => $this->cmpResult,
                         'cmpShowResults' => $this->cmpShowResults,
                     ])),

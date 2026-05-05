@@ -1,108 +1,173 @@
 <div>
     <style>
-        .cmp-wrap{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:20px}
-        .cmp-field{flex:1;min-width:140px}
+        .cmp-type-row{margin-bottom:16px}
         .cmp-label{display:block;font-size:13px;font-weight:500;margin-bottom:4px;color:#374151}
         .dark .cmp-label{color:#d1d5db}
         .cmp-select{width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;background:#fff;color:#111827}
         .dark .cmp-select{background:#1f2937;color:#f3f4f6;border-color:#4b5563}
-        .cmp-btn{padding:8px 20px;background:#16a34a;color:#fff;font-size:13px;font-weight:600;border-radius:8px;border:none;cursor:pointer;white-space:nowrap}
+
+        .cmp-groups{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:stretch;margin-bottom:18px}
+        @media (max-width:760px){.cmp-groups{grid-template-columns:1fr}}
+        .cmp-group{padding:14px;border-radius:12px;border:1px solid #e5e7eb;background:#fff;display:flex;flex-direction:column}
+        .dark .cmp-group{background:#1f2937;border-color:#4b5563}
+        .cmp-group-a{border-left:4px solid #3b82f6}
+        .cmp-group-b{border-left:4px solid #16a34a}
+        .cmp-group-title{font-size:13px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:8px;color:#111827}
+        .dark .cmp-group-title{color:#f3f4f6}
+        .cmp-group-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600}
+        .cmp-badge-a{background:#dbeafe;color:#1d4ed8}.dark .cmp-badge-a{background:#1e3a8a;color:#93c5fd}
+        .cmp-badge-b{background:#dcfce7;color:#15803d}.dark .cmp-badge-b{background:#14532d;color:#86efac}
+        .cmp-checkbox-list{flex:1;max-height:180px;overflow-y:auto;border:1px solid #d1d5db;border-radius:8px;padding:8px;background:#fafafa;display:flex;flex-direction:column;gap:2px}
+        .dark .cmp-checkbox-list{background:#111827;border-color:#4b5563}
+        .cmp-checkbox-item{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:6px;cursor:pointer;font-size:13px;color:#111827}
+        .cmp-checkbox-item:hover{background:#f3f4f6}
+        .dark .cmp-checkbox-item{color:#f3f4f6}
+        .dark .cmp-checkbox-item:hover{background:#374151}
+        .cmp-checkbox-item input{margin:0;cursor:pointer}
+        .cmp-vs{display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#6b7280;padding:0 4px}
+        .dark .cmp-vs{color:#9ca3af}
+        @media (max-width:760px){.cmp-vs{padding:6px 0}}
+
+        .cmp-actions{display:flex;justify-content:center;margin-bottom:18px}
+        .cmp-btn{padding:10px 28px;background:#16a34a;color:#fff;font-size:13px;font-weight:600;border-radius:8px;border:none;cursor:pointer;white-space:nowrap}
         .cmp-btn:hover{background:#15803d}
         .cmp-btn:disabled{background:#9ca3af;cursor:not-allowed}
+
         .cmp-table{width:100%;font-size:13px;border-collapse:collapse;margin-top:4px}
-        .cmp-table th,.cmp-table td{padding:8px 10px;border:1px solid #e5e7eb}
+        .cmp-table th,.cmp-table td{padding:10px;border:1px solid #e5e7eb}
         .dark .cmp-table th,.dark .cmp-table td{border-color:#4b5563}
         .cmp-th-empty{background:#f9fafb;text-align:left;width:18%}.dark .cmp-th-empty{background:#1f2937}
-        .cmp-th-m1{background:#eff6ff;color:#2563eb;text-align:center;font-weight:600}.dark .cmp-th-m1{background:#1e3a5f;color:#60a5fa}
-        .cmp-th-m2{background:#f0fdf4;color:#16a34a;text-align:center;font-weight:600}.dark .cmp-th-m2{background:#14532d;color:#4ade80}
+        .cmp-th-a{background:#eff6ff;color:#2563eb;text-align:center;font-weight:600}.dark .cmp-th-a{background:#1e3a5f;color:#60a5fa}
+        .cmp-th-b{background:#f0fdf4;color:#16a34a;text-align:center;font-weight:600}.dark .cmp-th-b{background:#14532d;color:#4ade80}
         .cmp-th-diff{background:#f3f4f6;text-align:center;font-weight:600;color:#374151}.dark .cmp-th-diff{background:#374151;color:#d1d5db}
         .cmp-td-label{font-weight:500;color:#111827}.dark .cmp-td-label{color:#f3f4f6}
         .cmp-td-val{text-align:center;color:#374151}.dark .cmp-td-val{color:#d1d5db}
-        .cmp-td-diff{text-align:center;font-weight:600}
+        .cmp-td-val .cmp-avg{display:block;font-size:11px;color:#9ca3af;margin-top:2px}
+        .cmp-td-diff{text-align:center;font-weight:700}
         .cmp-plus{color:#16a34a}.dark .cmp-plus{color:#4ade80}
         .cmp-minus{color:#dc2626}.dark .cmp-minus{color:#f87171}
         .cmp-zero{color:#6b7280}.dark .cmp-zero{color:#9ca3af}
+        .cmp-th-sub{font-size:11px;font-weight:500;opacity:0.85;display:block;margin-top:2px;font-style:normal}
+
         .cmp-empty{text-align:center;padding:20px;color:#6b7280;font-size:14px}.dark .cmp-empty{color:#9ca3af}
         .cmp-section-title{font-size:14px;font-weight:700;margin:20px 0 12px;color:#111827;display:flex;align-items:center;gap:8px}.dark .cmp-section-title{color:#f3f4f6}
         .cmp-section-title::before{content:'';display:block;width:4px;height:18px;background:#16a34a;border-radius:4px}
-        .cmp-doughnut-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px}
-        .cmp-doughnut-card{text-align:center;padding:16px;border-radius:16px;background:linear-gradient(135deg,#f8fafc,#f1f5f9);border:1px solid #e2e8f0;overflow:hidden}
-        .dark .cmp-doughnut-card{background:linear-gradient(135deg,#1e293b,#0f172a);border-color:#334155}
-        .cmp-doughnut-label{font-size:12px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px}.dark .cmp-doughnut-label{color:#94a3b8}
         .cmp-bar-wrap{margin-top:4px;padding:20px;border-radius:16px;background:linear-gradient(135deg,#f8fafc,#f1f5f9);border:1px solid #e2e8f0}
         .dark .cmp-bar-wrap{background:linear-gradient(135deg,#1e293b,#0f172a);border-color:#334155}
+        .cmp-warn{padding:10px 14px;border-radius:8px;background:#fef3c7;color:#92400e;font-size:13px;margin-bottom:12px;border:1px solid #fde68a}
+        .dark .cmp-warn{background:#451a03;color:#fcd34d;border-color:#78350f}
     </style>
 
-    <div class="cmp-wrap">
-        <div class="cmp-field" style="min-width:160px;">
-            <label class="cmp-label">Hisobot turi</label>
-            <select wire:model.live="cmpType" class="cmp-select">
-                <option value="yuk_ortilishi">Oylik yuk ortilishi</option>
-                <option value="yuk_tushurilishi">Oylik yuk tushurilishi</option>
-                <option value="pul_tushumi">Oylik pul tushumi</option>
-                <option value="xarajat_daromad">Oylik xarajat va daromad</option>
-            </select>
-        </div>
-        <div class="cmp-field">
-            <label class="cmp-label">1-oy</label>
-            <select wire:model="cmpMonth1" class="cmp-select" {{ count($monthOptions) === 0 ? 'disabled' : '' }}>
-                @if(count($monthOptions) === 0)
-                    <option value="">Ma'lumot yo'q</option>
-                @else
+    <div class="cmp-type-row">
+        <label class="cmp-label">Hisobot turi</label>
+        <select wire:model.live="cmpType" class="cmp-select">
+            <option value="yuk_ortilishi">Oylik yuk ortilishi</option>
+            <option value="yuk_tushurilishi">Oylik yuk tushurilishi</option>
+            <option value="pul_tushumi">Oylik pul tushumi</option>
+            <option value="xarajat_daromad">Oylik xarajat va daromad</option>
+        </select>
+    </div>
+
+    @if(count($monthOptions) === 0)
+        <div class="cmp-empty">Bu turdagi hisobotlar topilmadi</div>
+    @else
+        <div class="cmp-groups">
+            <div class="cmp-group cmp-group-a">
+                <div class="cmp-group-title">
+                    <span class="cmp-group-badge cmp-badge-a">Dan</span>
+                </div>
+                <div class="cmp-checkbox-list">
                     @foreach($monthOptions as $val => $lbl)
-                        <option value="{{ $val }}">{{ $lbl }}</option>
+                        <label class="cmp-checkbox-item">
+                            <input type="checkbox" wire:model="cmpMonthsA" value="{{ $val }}" />
+                            <span>{{ $lbl }}</span>
+                        </label>
                     @endforeach
-                @endif
-            </select>
-        </div>
-        <div class="cmp-field">
-            <label class="cmp-label">2-oy</label>
-            <select wire:model="cmpMonth2" class="cmp-select" {{ count($monthOptions) === 0 ? 'disabled' : '' }}>
-                @if(count($monthOptions) === 0)
-                    <option value="">Ma'lumot yo'q</option>
-                @else
+                </div>
+            </div>
+
+            <div class="cmp-vs">VS</div>
+
+            <div class="cmp-group cmp-group-b">
+                <div class="cmp-group-title">
+                    <span class="cmp-group-badge cmp-badge-b">Gacha</span>
+                </div>
+                <div class="cmp-checkbox-list">
                     @foreach($monthOptions as $val => $lbl)
-                        <option value="{{ $val }}">{{ $lbl }}</option>
+                        <label class="cmp-checkbox-item">
+                            <input type="checkbox" wire:model="cmpMonthsB" value="{{ $val }}" />
+                            <span>{{ $lbl }}</span>
+                        </label>
                     @endforeach
-                @endif
-            </select>
+                </div>
+            </div>
         </div>
-        <div style="display:flex;align-items:flex-end;">
-            <button wire:click="runComparison" type="button" class="cmp-btn" {{ count($monthOptions) < 2 ? 'disabled' : '' }}>
+
+        @if((empty($cmpMonthsA) || empty($cmpMonthsB)) && !$cmpShowResults)
+            <div class="cmp-warn">Har ikki guruhda kamida bittadan oy tanlang.</div>
+        @endif
+
+        <div class="cmp-actions">
+            <button wire:click="runComparison" type="button" class="cmp-btn"
+                    @if(empty($cmpMonthsA) || empty($cmpMonthsB)) disabled @endif>
                 Taqqoslash
             </button>
         </div>
-    </div>
+    @endif
 
-    @if($cmpShowResults && count($cmpResult) > 0)
+    @if($cmpShowResults && !empty($cmpResult['metrics'] ?? null))
         @php
-            $m1Name = $monthOptions[$cmpMonth1] ?? $cmpMonth1;
-            $m2Name = $monthOptions[$cmpMonth2] ?? $cmpMonth2;
+            $labelA = $cmpResult['labelA'];
+            $labelB = $cmpResult['labelB'];
+            $countA = $cmpResult['countA'];
+            $countB = $cmpResult['countB'];
+            $metrics = $cmpResult['metrics'];
         @endphp
 
         <table class="cmp-table">
             <thead>
                 <tr>
                     <th class="cmp-th-empty"></th>
-                    <th class="cmp-th-m1">{{ $m1Name }}</th>
-                    <th class="cmp-th-m2">{{ $m2Name }}</th>
+                    <th class="cmp-th-a">
+                        Dan ({{ $countA }} oy)
+                        <span class="cmp-th-sub">{{ $labelA }}</span>
+                    </th>
+                    <th class="cmp-th-b">
+                        Gacha ({{ $countB }} oy)
+                        <span class="cmp-th-sub">{{ $labelB }}</span>
+                    </th>
                     <th class="cmp-th-diff">Farq</th>
                     <th class="cmp-th-diff">%</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach($cmpResult as $row)
+                @foreach($metrics as $row)
                     @php
-                        $diff = $row['v2'] - $row['v1'];
+                        $diff = $row['diff'];
                         $diffClass = $diff > 0 ? 'cmp-plus' : ($diff < 0 ? 'cmp-minus' : 'cmp-zero');
                         $diffSign = $diff > 0 ? '+' : '';
-                        $pct = $row['pct'] ?? '0%';
-                        $pctClass = str_starts_with($pct, '+') ? 'cmp-plus' : (str_starts_with($pct, '-') ? 'cmp-minus' : 'cmp-zero');
+                        $pct = $row['pct'];
+                        $pctClass = 'cmp-zero';
+                        if (str_starts_with($pct, '+') && $pct !== '+0%' && $pct !== '+0.0%') {
+                            $pctClass = 'cmp-plus';
+                        } elseif (str_starts_with($pct, '-')) {
+                            $pctClass = 'cmp-minus';
+                        }
                     @endphp
                     <tr>
                         <td class="cmp-td-label">{{ $row['label'] }}</td>
-                        <td class="cmp-td-val">{{ number_format($row['v1'], 0, '.', ' ') }}</td>
-                        <td class="cmp-td-val">{{ number_format($row['v2'], 0, '.', ' ') }}</td>
+                        <td class="cmp-td-val">
+                            <strong>{{ number_format($row['sumA'], 0, '.', ' ') }}</strong>
+                            @if($countA > 1)
+                                <span class="cmp-avg">o'rt: {{ number_format($row['avgA'], 0, '.', ' ') }}</span>
+                            @endif
+                        </td>
+                        <td class="cmp-td-val">
+                            <strong>{{ number_format($row['sumB'], 0, '.', ' ') }}</strong>
+                            @if($countB > 1)
+                                <span class="cmp-avg">o'rt: {{ number_format($row['avgB'], 0, '.', ' ') }}</span>
+                            @endif
+                        </td>
                         <td class="cmp-td-diff {{ $diffClass }}">{{ $diffSign }}{{ number_format($diff, 0, '.', ' ') }}</td>
                         <td class="cmp-td-diff {{ $pctClass }}">{{ $pct }}</td>
                     </tr>
@@ -124,59 +189,12 @@
                     }
 
                     function draw() {
-                        const results = {{ Js::from($cmpResult) }};
-                        const m1Name = {{ Js::from($m1Name) }};
-                        const m2Name = {{ Js::from($m2Name) }};
+                        const metrics = {{ Js::from($metrics) }};
+                        const labelA = {{ Js::from('Dan (' . $countA . ' oy)') }};
+                        const labelB = {{ Js::from('Gacha (' . $countB . ' oy)') }};
                         const isDark = document.documentElement.classList.contains('dark');
                         const txtC = isDark ? '#cbd5e1' : '#334155';
                         const gridC = isDark ? '#1e293b' : '#f1f5f9';
-                        const emptyC = isDark ? '#334155' : '#e2e8f0';
-
-                        results.forEach((row, i) => {
-                            const el = $el.querySelector('#cmpD' + i);
-                            if (!el) return;
-                            const old = Chart.getChart(el);
-                            if (old) old.destroy();
-
-                            const base = Math.max(row.v1, row.v2) || 1;
-                            const pct = Math.min((row.v2 / base) * 100, 100);
-                            const rest = Math.max(100 - pct, 0);
-                            const clr = pct >= 100 ? '#22c55e' : (pct >= 80 ? '#eab308' : '#ef4444');
-
-                            new Chart(el, {
-                                type: 'doughnut',
-                                data: {
-                                    datasets: [{
-                                        data: pct >= 100 ? [100] : [pct, rest],
-                                        backgroundColor: pct >= 100 ? [clr] : [clr, emptyC],
-                                        borderWidth: 0,
-                                        borderRadius: pct >= 100 ? 0 : 8,
-                                    }]
-                                },
-                                options: {
-                                    cutout: '72%',
-                                    responsive: false,
-                                    animation: { animateRotate: true, duration: 800 },
-                                    plugins: { legend: { display: false }, tooltip: { enabled: false } }
-                                },
-                                plugins: [{
-                                    id: 'ct' + i,
-                                    afterDraw(chart) {
-                                        const {ctx, width, height} = chart;
-                                        ctx.save();
-                                        ctx.font = 'bold 22px system-ui,sans-serif';
-                                        ctx.fillStyle = clr;
-                                        ctx.textAlign = 'center';
-                                        ctx.textBaseline = 'middle';
-                                        ctx.fillText(pct.toFixed(0) + '%', width/2, height/2 - 6);
-                                        ctx.font = '11px system-ui,sans-serif';
-                                        ctx.fillStyle = txtC;
-                                        ctx.fillText(Number(row.v2).toLocaleString('ru'), width/2, height/2 + 14);
-                                        ctx.restore();
-                                    }
-                                }]
-                            });
-                        });
 
                         const barEl = $el.querySelector('#cmpBar');
                         if (!barEl) return;
@@ -186,10 +204,22 @@
                         new Chart(barEl, {
                             type: 'bar',
                             data: {
-                                labels: results.map(r => r.label),
+                                labels: metrics.map(m => m.label),
                                 datasets: [
-                                    { label: '🔵 ' + m1Name, data: results.map(r => r.v1), backgroundColor: 'rgba(59,130,246,0.85)', borderRadius: 8, borderSkipped: false, barPercentage: 0.5, categoryPercentage: 0.6 },
-                                    { label: '🟢 ' + m2Name, data: results.map(r => r.v2), backgroundColor: 'rgba(34,197,94,0.85)', borderRadius: 8, borderSkipped: false, barPercentage: 0.5, categoryPercentage: 0.6 }
+                                    {
+                                        label: '🔵 ' + labelA,
+                                        data: metrics.map(m => m.sumA),
+                                        backgroundColor: 'rgba(59,130,246,0.85)',
+                                        borderRadius: 8, borderSkipped: false,
+                                        barPercentage: 0.55, categoryPercentage: 0.65,
+                                    },
+                                    {
+                                        label: '🟢 ' + labelB,
+                                        data: metrics.map(m => m.sumB),
+                                        backgroundColor: 'rgba(34,197,94,0.85)',
+                                        borderRadius: 8, borderSkipped: false,
+                                        barPercentage: 0.55, categoryPercentage: 0.65,
+                                    },
                                 ]
                             },
                             options: {
@@ -200,7 +230,7 @@
                                 plugins: {
                                     legend: {
                                         position: 'top',
-                                        labels: { color: txtC, font: { size: 13, weight: '700' }, padding: 20 }
+                                        labels: { color: txtC, font: { size: 13, weight: '700' }, padding: 18 }
                                     },
                                     tooltip: {
                                         backgroundColor: isDark ? '#1e293b' : '#fff',
@@ -211,7 +241,6 @@
                                         cornerRadius: 8, padding: 12,
                                         callbacks: { label: (c) => ' ' + c.dataset.label + ': ' + Number(c.raw).toLocaleString('ru') }
                                     },
-                                    datalabels: false
                                 },
                                 scales: {
                                     x: {
@@ -250,24 +279,10 @@
                 loadChart();
             "
         >
-            <div class="cmp-section-title">Reja bajarilishi</div>
-            <div class="cmp-doughnut-grid">
-                @foreach($cmpResult as $i => $row)
-                    <div class="cmp-doughnut-card">
-                        <div class="cmp-doughnut-label">{{ $row['label'] }}</div>
-                        <div style="display:flex;justify-content:center;">
-                            <canvas id="cmpD{{ $i }}" width="150" height="150"></canvas>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-
-            <div class="cmp-section-title">Oylar bo'yicha taqqoslash</div>
+            <div class="cmp-section-title">Guruhlar bo'yicha taqqoslash (yig'indi)</div>
             <div class="cmp-bar-wrap">
-                <canvas id="cmpBar" style="height:220px;width:100%;"></canvas>
+                <canvas id="cmpBar" style="height:280px;width:100%;"></canvas>
             </div>
         </div>
-    @elseif(count($monthOptions) === 0)
-        <div class="cmp-empty">Bu turdagi hisobotlar topilmadi</div>
     @endif
 </div>
