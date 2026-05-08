@@ -111,13 +111,13 @@ class MikrosxemalarRelationManager extends RelationManager
                         $num = 'font-weight:700;font-size:13px;font-variant-numeric:tabular-nums;letter-spacing:.2px';
                         $lbl = 'text-transform:uppercase;font-size:10px;letter-spacing:.7px;font-weight:600;opacity:.85';
 
-                        $totalPill = $pillBase . ';background:rgba(148,163,184,.10);border-color:rgba(148,163,184,.25);color:#e2e8f0';
+                        $totalPill = $pillBase . ';background:rgba(148,163,184,.10);border-color:rgba(148,163,184,.25);color:inherit';
                         $sozPill = $c['soz'] > 0
-                            ? $pillBase . ';background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.30);color:#4ade80'
-                            : $pillBase . ';background:rgba(100,116,139,.10);border-color:rgba(100,116,139,.25);color:#94a3b8';
+                            ? $pillBase . ';background:rgba(34,197,94,.15);border-color:rgba(34,197,94,.40);color:#16a34a'
+                            : $pillBase . ';background:rgba(100,116,139,.10);border-color:rgba(100,116,139,.25);color:#6b7280';
                         $nosozPill = $c['nosoz'] > 0
-                            ? $pillBase . ';background:rgba(248,113,113,.12);border-color:rgba(248,113,113,.30);color:#f87171'
-                            : $pillBase . ';background:rgba(100,116,139,.10);border-color:rgba(100,116,139,.25);color:#94a3b8';
+                            ? $pillBase . ';background:rgba(248,113,113,.15);border-color:rgba(248,113,113,.40);color:#dc2626'
+                            : $pillBase . ';background:rgba(100,116,139,.10);border-color:rgba(100,116,139,.25);color:#6b7280';
 
                         $chartBg = $c['nosoz'] > 0 ? 'rgba(248,113,113,.55)' : 'rgba(100,116,139,.3)';
                         $chartFg = '#22c55e';
@@ -137,7 +137,7 @@ class MikrosxemalarRelationManager extends RelationManager
                                         ? '<circle cx="21" cy="21" r="17" fill="none" stroke="' . $chartFg . '" stroke-width="5" pathLength="100" stroke-dasharray="' . $sozPct . ' ' . $nosozPct . '" stroke-linecap="round" transform="rotate(-90 21 21)"/>'
                                         : '')
                                 . '</svg>'
-                                . '<span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#e2e8f0;font-variant-numeric:tabular-nums">' . $sozPct . '%</span>'
+                                . '<span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:inherit;font-variant-numeric:tabular-nums">' . $sozPct . '%</span>'
                             . '</span>'
                             . '</span>'
                         );

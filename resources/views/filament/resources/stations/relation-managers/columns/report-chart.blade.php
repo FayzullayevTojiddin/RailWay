@@ -38,7 +38,7 @@
 
 <div style="display: flex; align-items: center; justify-content: center;">
     <svg width="48" height="48" viewBox="0 0 80 80">
-        <circle cx="40" cy="40" r="36" fill="none" stroke="#374151" stroke-width="7"/>
+        <circle cx="40" cy="40" r="36" fill="none" stroke="#d1d5db" stroke-width="7"/>
         <circle cx="40" cy="40" r="36" fill="none" stroke="#10b981" stroke-width="7"
             stroke-dasharray="{{ $dash1 }} {{ $dash2 }}"
             stroke-dashoffset="0"
@@ -48,6 +48,6 @@
             stroke-dashoffset="-{{ $dash1 }}"
             transform="rotate(-90 40 40)"/>
         <text x="40" y="40" text-anchor="middle" dominant-baseline="central"
-            fill="white" font-size="14" font-weight="bold">{{ $percent }}%</text>
+            fill="currentColor" font-size="14" font-weight="bold">{{ $percent }}%</text>
     </svg>
 </div>

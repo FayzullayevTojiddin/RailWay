@@ -75,7 +75,7 @@
         $dashRemaining = $circ - $dashCompleted;
 
         $colorCompleted = ($a > 0 && $b >= $a) ? '#22c55e' : '#6366f1';
-        $colorRemaining = '#2d2f34';
+        $colorRemaining = '#d1d5db';
         $centerText = $a > 0 ? number_format($pctComplete, 1) . '%' : '0%';
     @endphp
 
@@ -89,7 +89,7 @@
                 <circle cx="{{ $cx }}" cy="{{ $cy }}" r="{{ $r }}" fill="none" stroke="{{ $colorCompleted }}" stroke-width="10" stroke-linecap="round" stroke-dasharray="{{ $dashCompleted }} {{ $circ - $dashCompleted }}" transform="rotate(-90 {{ $cx }} {{ $cy }})"></circle>
 
                 {{-- center text --}}
-                <text x="{{ $cx }}" y="{{ $cy+4 }}" font-size="10" font-weight="600" text-anchor="middle" fill="#E5E7EB" style="font-family: system-ui, -apple-system, 'Segoe UI', Roboto;">
+                <text x="{{ $cx }}" y="{{ $cy+4 }}" font-size="10" font-weight="600" text-anchor="middle" fill="currentColor" style="font-family: system-ui, -apple-system, 'Segoe UI', Roboto;">
                     {{ $centerText }}
                 </text>
 
@@ -99,10 +99,10 @@
             {{-- legend --}}
             <g transform="translate(66,8)">
                 <rect x="0" y="0" width="8" height="8" rx="2" fill="#aab0ff"></rect>
-                <text x="12" y="7" font-size="9" fill="#9CA3AF">{{ \Illuminate\Support\Str::limit($labels[0] ?? 'Reja', 8) }}</text>
+                <text x="12" y="7" font-size="9" fill="currentColor">{{ \Illuminate\Support\Str::limit($labels[0] ?? 'Reja', 8) }}</text>
 
                 <rect x="0" y="16" width="8" height="8" rx="2" fill="{{ $colorCompleted }}"></rect>
-                <text x="12" y="23" font-size="9" fill="#9CA3AF">{{ \Illuminate\Support\Str::limit($labels[1] ?? 'Haqiqiy', 8) }}</text>
+                <text x="12" y="23" font-size="9" fill="currentColor">{{ \Illuminate\Support\Str::limit($labels[1] ?? 'Haqiqiy', 8) }}</text>
             </g>
         </svg>
     </div>

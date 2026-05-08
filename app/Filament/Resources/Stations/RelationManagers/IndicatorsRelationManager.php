@@ -97,6 +97,7 @@ class IndicatorsRelationManager extends RelationManager
                     ViewAction::make()->label("Ko'rish")->button(),
                 ]
             )
+            ->defaultSort('created_at', 'desc')
             ->bulkActions(
                 $isEditMode ? [
                     DeleteBulkAction::make(),
