@@ -271,7 +271,7 @@ class ReportsRelationManager extends RelationManager
                     ->formatStateUsing(function ($state, $record) {
                         if (!$state) return '-';
                         $formatted = number_format($state, 0, '.', ' ');
-                        if ($record->type === 'xarajat_daromad') {
+                        if (in_array($record->type, ['xarajat_daromad', 'pul_tushumi'])) {
                             return $formatted . ' so\'m';
                         }
                         return $formatted . ' dona/vagon';
@@ -283,7 +283,7 @@ class ReportsRelationManager extends RelationManager
                     ->formatStateUsing(function ($state, $record) {
                         if (!$state) return '-';
                         $formatted = number_format($state, 0, '.', ' ');
-                        if ($record->type === 'xarajat_daromad') {
+                        if (in_array($record->type, ['xarajat_daromad', 'pul_tushumi'])) {
                             return $formatted . ' so\'m';
                         }
                         return $formatted . ' dona/vagon';
